@@ -1,0 +1,5 @@
+package akka.persistence.snapshot.sqlasync
+
+class MySQLSnapshotStore extends ScalikeJDBCSnapshotStore
+
+class PostgreSQLSnapshotStore extends ScalikeJDBCSnapshotStore

@@ -2,18 +2,23 @@ package akka.persistence.helper
 
 import akka.persistence.PluginSpec
 import akka.persistence.common.{ScalikeJDBCExtension, SQLAsyncConfig}
-import scala.concurrent.Await
+import com.typesafe.config.{ConfigFactory, Config}
 import scala.concurrent.duration._
+import scala.concurrent.{Future, Await}
 import scalikejdbc.SQL
 import scalikejdbc.async._
 
 trait DatabaseInitializer extends PluginSpec {
-  protected val sqlAsyncConfig: SQLAsyncConfig = ScalikeJDBCExtension(system).config
-  private[this] def executeDDL[A](ddl: String): Unit = {
+  protected lazy val sqlAsyncConfig: SQLAsyncConfig = ScalikeJDBCExtension(system).config
+  private[this] def executeDDL[A](ddl: Seq[String]): Unit = {
     implicit val executor = sqlAsyncConfig.system.dispatcher
     val provider = ScalikeJDBCExtension(sqlAsyncConfig.system).sessionProvider
     val result = provider.localTx { implicit session =>
-      SQL(ddl).update().future().map(_ => ())
+      ddl.foldLeft(Future.successful(())) { (result, d) =>
+        result.flatMap { _ =>
+          SQL(d).update().future().map(_ => ())
+        }
+      }
     }
     Await.result(result, 10.seconds)
   }
@@ -21,18 +26,24 @@ trait DatabaseInitializer extends PluginSpec {
   private[this] def dropJournalTableDDL: String = {
     s"DROP TABLE IF EXISTS ${sqlAsyncConfig.journalTableName}"
   }
+  protected def createSnapshotTableDDL: String
+  private[this] def dropSnapshotTableDDL: String = {
+    s"DROP TABLE IF EXISTS ${sqlAsyncConfig.snapshotTableName}"
+  }
 
   /**
    * Flush DB.
    */
   protected override def beforeAll(): Unit = {
-    executeDDL(dropJournalTableDDL)
-    executeDDL(createJournalTableDDL)
+    val ddl = Seq(dropJournalTableDDL, dropSnapshotTableDDL, createJournalTableDDL, createSnapshotTableDDL)
+    executeDDL(ddl)
     super.beforeAll()
   }
 }
 
-trait MySQLInitializer extends DatabaseInitializer {
+trait MySQLInitializer extends DatabaseInitializer with PluginSpec {
+  override lazy val config: Config = ConfigFactory.load("mysql-application.conf")
+
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
@@ -45,9 +56,23 @@ trait MySQLInitializer extends DatabaseInitializer {
         |)
       """.stripMargin
   }
+
+  override protected def createSnapshotTableDDL: String = {
+    s"""
+        |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.snapshotTableName} (
+        |  persistence_id VARCHAR(255) NOT NULL,
+        |  sequence_nr BIGINT NOT NULL,
+        |  created_at BIGINT NOT NULL,
+        |  snapshot BLOB NOT NULL,
+        |  PRIMARY KEY (persistence_id, sequence_nr)
+        |)
+     """.stripMargin
+  }
 }
 
-trait PostgreSQLInitializer extends DatabaseInitializer {
+trait PostgreSQLInitializer extends DatabaseInitializer with PluginSpec {
+  override lazy val config: Config = ConfigFactory.load("postgresql-application.conf")
+
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
@@ -59,5 +84,17 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
         |  PRIMARY KEY (persistence_id, sequence_nr)
         |)
       """.stripMargin
+  }
+
+  override protected def createSnapshotTableDDL: String = {
+    s"""
+        |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.snapshotTableName} (
+        |  persistence_id VARCHAR(255) NOT NULL,
+        |  sequence_nr BIGINT NOT NULL,
+        |  created_at BIGINT NOT NULL,
+        |  snapshot BYTEA NOT NULL,
+        |  PRIMARY KEY (persistence_id, sequence_nr)
+        |)
+     """.stripMargin
   }
 }
