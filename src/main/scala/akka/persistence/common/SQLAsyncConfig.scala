@@ -10,6 +10,7 @@ private[persistence] class SQLAsyncConfig(val system: ActorSystem) {
   val pass = config.getString("pass")
   val url = config.getString("url")
   val maxPoolSize = config.getInt("max-pool-size")
+  val waitQueueCapacity = config.getInt("wait-queue-capacity")
   val journalTableName = config.getString("journal-table-name")
   val snapshotTableName = config.getString("snapshot-table-name")
 }
