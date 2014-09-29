@@ -8,6 +8,8 @@ scalaVersion := "2.11.2"
 
 crossScalaVersions := Seq("2.10.4", "2.11.2")
 
+parallelExecution in Test := false
+
 val akkaVersion = "2.3.6"
 val mauricioVersion = "0.2.15"
 
