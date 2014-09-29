@@ -111,6 +111,11 @@ CREATE TABLE IF NOT EXISTS {your_snapshot_table_name} (
 );
 ```
 
+## Release Notes
+
+### 0.1 - Sep 30, 2014
+- The first release
+
 ## License
 
 Apache 2.0
