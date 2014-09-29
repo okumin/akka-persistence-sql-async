@@ -1,5 +1,7 @@
 # akka-persistence-sql-async
 
+[![Build Status](https://travis-ci.org/okumin/akka-persistence-sql-async.svg?branch=master)](https://travis-ci.org/okumin/akka-persistence-sql-async)
+
 A journal and snapshot store plugin for [akka-persistence](http://doc.akka.io/docs/akka/2.3.6/scala/persistence.html) using RDBMS.
 Akka-persistence-sql-async executes queries by [ScalikeJDBC-Async](https://github.com/scalikejdbc/scalikejdbc-async) that provides non-blocking APIs to talk to databases.
 
