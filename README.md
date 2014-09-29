@@ -8,18 +8,39 @@ Akka-persistence-sql-async supports following databases.
 - MySQL
 - PostgreSQL
 
+This library is tested against [akka-persistence-tck](http://doc.akka.io/docs/akka/2.3.6/scala/persistence.html#plugin-tck).
+
 ## Usage
 
-In application.conf,
+### Dependency
+
+You should add the following dependency.
+
+```
+libraryDependencies += "com.okumin" %% "akka-persistence-sql-async" % "0.1"
+```
+
+And then, please include the mysql-async if you use MySQL.
+
+```
+libraryDependencies += "com.github.mauricio" %% "mysql-async" % "0.2.15"
+```
+
+And if you use PostgreSQL.
+
+```
+libraryDependencies += "com.github.mauricio" %% "postgresql-async" % "0.2.15"
+```
+
+### Configuration
+
+In `application.conf`,
 
 ```
 akka {
   persistence {
     journal.plugin = "akka-persistence-sql-async.journal"
     snapshot-store.plugin = "akka-persistence-sql-async.snapshot-store"
-
-    # disable leveldb (default store impl)
-    journal.leveldb.native = off
   }
 }
 
