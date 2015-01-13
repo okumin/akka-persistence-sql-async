@@ -16,7 +16,7 @@ val mauricioVersion = "0.2.15"
 libraryDependencies ++= Seq(
   "com.typesafe.akka"   %% "akka-actor"                        % akkaVersion,
   "com.typesafe.akka"   %% "akka-persistence-experimental"     % akkaVersion,
-  "org.scalikejdbc"     %% "scalikejdbc-async"                 % "0.5.1",
+  "org.scalikejdbc"     %% "scalikejdbc-async"                 % "0.5.4",
   "com.github.mauricio" %% "mysql-async"                       % mauricioVersion % "provided",
   "com.github.mauricio" %% "postgresql-async"                  % mauricioVersion % "provided",
   "com.typesafe.akka"   %% "akka-persistence-tck-experimental" % akkaVersion     % "test",

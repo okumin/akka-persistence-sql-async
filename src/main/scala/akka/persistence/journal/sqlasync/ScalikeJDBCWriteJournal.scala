@@ -127,7 +127,7 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
     sessionProvider.withPool { implicit session =>
       val sql = sql"SELECT MAX(sequence_nr) FROM $table WHERE persistence_id = $persistenceId"
       log.debug(s"Execute ${sql.statement} binding persistence_id = $persistenceId and sequence_nr = $fromSequenceNr")
-      sql.map(_.long(1)).single().future().map(_.getOrElse(0))
+      sql.map(_.longOpt(1)).single().future().map(_.flatten.getOrElse(0L))
     }
   }
 
