@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"   %% "akka-persistence-tck-experimental" % akkaVersion     % "test",
   "com.typesafe.akka"   %% "akka-slf4j"                        % akkaVersion     % "test",
   "com.typesafe.akka"   %% "akka-testkit"                      % akkaVersion     % "test",
-  "org.slf4j"            % "slf4j-log4j12"                     % "1.7.7"         % "test"
+  "org.slf4j"            % "slf4j-log4j12"                     % "1.7.10"        % "test"
 )
 
 publishMavenStyle := true
