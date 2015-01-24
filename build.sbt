@@ -10,7 +10,7 @@ crossScalaVersions := Seq("2.10.4", "2.11.5")
 
 parallelExecution in Test := false
 
-val akkaVersion = "2.3.8"
+val akkaVersion = "2.3.9"
 val mauricioVersion = "0.2.15"
 
 libraryDependencies ++= Seq(
