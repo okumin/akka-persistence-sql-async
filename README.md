@@ -55,7 +55,7 @@ akka-persistence-sql-async {
   # snapshot-store.class = "akka.persistence.snapshot.sqlasync.PostgreSQLSnapshotStore"
 
   user = "root"
-  pass = ""
+  password = ""
   url = "jdbc:mysql://localhost/akka_persistence_sql_async"
   max-pool-size = 4 # total connection count
   wait-queue-capacity = 10000 # If query cannot be executed soon, it wait in the queue and will be executed later.

@@ -21,7 +21,7 @@ private[persistence] class ScalikeJDBCExtension(system: ExtendedActorSystem) ext
     name = connectionPoolName,
     url = config.url,
     user = config.user,
-    password = if (config.pass == "") null else config.pass,
+    password = if (config.password == "") null else config.password,
     settings = AsyncConnectionPoolSettings(
       maxPoolSize = config.maxPoolSize,
       maxQueueSize = config.waitQueueCapacity)

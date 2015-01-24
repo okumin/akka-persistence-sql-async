@@ -7,7 +7,7 @@ private[persistence] class SQLAsyncConfig(val system: ActorSystem) {
   val config = system.settings.config.getConfig(rootKey)
 
   val user = config.getString("user")
-  val pass = config.getString("pass")
+  val password = config.getString("password")
   val url = config.getString("url")
   val maxPoolSize = config.getInt("max-pool-size")
   val waitQueueCapacity = config.getInt("wait-queue-capacity")
