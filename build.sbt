@@ -11,7 +11,7 @@ crossScalaVersions := Seq("2.10.5", "2.11.6")
 parallelExecution in Test := false
 
 val akkaVersion = "2.3.9"
-val mauricioVersion = "0.2.15"
+val mauricioVersion = "0.2.16"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka"   %% "akka-actor"                        % akkaVersion,
