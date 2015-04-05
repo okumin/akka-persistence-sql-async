@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/okumin/akka-persistence-sql-async.svg?branch=master)](https://travis-ci.org/okumin/akka-persistence-sql-async)
 
-A journal and snapshot store plugin for [akka-persistence](http://doc.akka.io/docs/akka/2.3.6/scala/persistence.html) using RDBMS.
+A journal and snapshot store plugin for [akka-persistence](http://doc.akka.io/docs/akka/2.3.9/scala/persistence.html) using RDBMS.
 Akka-persistence-sql-async executes queries by [ScalikeJDBC-Async](https://github.com/scalikejdbc/scalikejdbc-async) that provides non-blocking APIs to talk to databases.
 
 
@@ -10,7 +10,7 @@ Akka-persistence-sql-async supports following databases.
 - MySQL
 - PostgreSQL
 
-This library is tested against [akka-persistence-tck](http://doc.akka.io/docs/akka/2.3.6/scala/persistence.html#plugin-tck).
+This library is tested against [akka-persistence-tck](http://doc.akka.io/docs/akka/2.3.9/scala/persistence.html#plugin-tck).
 
 ## Usage
 
@@ -19,19 +19,19 @@ This library is tested against [akka-persistence-tck](http://doc.akka.io/docs/ak
 You should add the following dependency.
 
 ```
-libraryDependencies += "com.okumin" %% "akka-persistence-sql-async" % "0.1"
+libraryDependencies += "com.okumin" %% "akka-persistence-sql-async" % "0.2"
 ```
 
 And then, please include the mysql-async if you use MySQL.
 
 ```
-libraryDependencies += "com.github.mauricio" %% "mysql-async" % "0.2.15"
+libraryDependencies += "com.github.mauricio" %% "mysql-async" % "0.2.16"
 ```
 
 And if you use PostgreSQL.
 
 ```
-libraryDependencies += "com.github.mauricio" %% "postgresql-async" % "0.2.15"
+libraryDependencies += "com.github.mauricio" %% "postgresql-async" % "0.2.16"
 ```
 
 ### Configuration
@@ -112,6 +112,9 @@ CREATE TABLE IF NOT EXISTS {your_snapshot_table_name} (
 ```
 
 ## Release Notes
+
+### 0.2 - Apr 5, 2015
+- [Change pass to password in configuration](https://github.com/okumin/akka-persistence-sql-async/issues/3)
 
 ### 0.1 - Sep 30, 2014
 - The first release
