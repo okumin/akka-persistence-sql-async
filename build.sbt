@@ -39,7 +39,7 @@ publishTo <<= version { (v: String) =>
     Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
-pomExtra := (
+pomExtra := {
   <url>https://github.com/okumin/akka-persistence-sql-async</url>
   <licenses>
     <license>
@@ -59,4 +59,4 @@ pomExtra := (
       <url>http://okumin.com/</url>
     </developer>
   </developers>
-)
+}
