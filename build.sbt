@@ -1,4 +1,6 @@
 
+lazy val root = (project in file(".")).aggregate(core, tckTest)
+
 lazy val core = (project in file("core"))
   .settings(commonSettings: _*)
   .settings(publishSettings: _*)
@@ -6,11 +8,26 @@ lazy val core = (project in file("core"))
     name := "akka-persistence-sql-async"
   )
 
+lazy val tckTest = (project in file("tck-test"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "akka-persistence-sql-async-tck-test"
+  )
+  .dependsOn(core)
+
+lazy val performanceTest = (project in file("performance-test"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "akka-persistence-sql-async-performance-test"
+  )
+  .dependsOn(
+    tckTest % "test->test"
+  )
+
 lazy val commonSettings = Seq(
   organization := "com.okumin",
   version := "0.2",
   scalaVersion := "2.11.7",
-  crossScalaVersions := Seq("2.10.5", "2.11.7"),
   parallelExecution in Test := false,
   libraryDependencies := commonDependencies
 )
@@ -43,23 +60,23 @@ lazy val publishSettings = Seq(
   },
   pomExtra := {
     <url>https://github.com/okumin/akka-persistence-sql-async</url>
-      <licenses>
-        <license>
-          <name>Apache 2 License</name>
-          <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
-          <distribution>repo</distribution>
-        </license>
-      </licenses>
-      <scm>
-        <url>git@github.com:okumin/akka-persistence-sql-async.git</url>
-        <connection>scm:git:git@github.com:okumin/akka-persistence-sql-async.git</connection>
-      </scm>
-      <developers>
-        <developer>
-          <id>okumin</id>
-          <name>okumin</name>
-          <url>http://okumin.com/</url>
-        </developer>
-      </developers>
+    <licenses>
+      <license>
+        <name>Apache 2 License</name>
+        <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+        <distribution>repo</distribution>
+      </license>
+    </licenses>
+    <scm>
+      <url>git@github.com:okumin/akka-persistence-sql-async.git</url>
+      <connection>scm:git:git@github.com:okumin/akka-persistence-sql-async.git</connection>
+    </scm>
+    <developers>
+      <developer>
+        <id>okumin</id>
+        <name>okumin</name>
+        <url>http://okumin.com/</url>
+      </developer>
+    </developers>
   }
 )
