@@ -1,15 +1,14 @@
 package akka.persistence.snapshot.sqlasync
 
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{ActorSystem, Props}
 import akka.persistence.SnapshotProtocol.{DeleteSnapshot, DeleteSnapshots, LoadSnapshot, LoadSnapshotResult, SaveSnapshot}
 import akka.persistence._
-import akka.persistence.snapshot.sqlasync.AsyncSnapshotStore.DeleteSnapshotFailure
-import akka.persistence.snapshot.sqlasync.AsyncSnapshotStore.DeleteSnapshotSuccess
-import akka.testkit.{TestProbe, ImplicitSender, TestKit}
+import akka.persistence.snapshot.sqlasync.AsyncSnapshotStore.{DeleteSnapshotFailure, DeleteSnapshotSuccess}
+import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import java.io.IOException
 import org.scalatest.{Matchers, WordSpecLike}
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.{Future, Promise}
 
 class AsyncSnapshotStoreSpec
   extends TestKit(ActorSystem("async-snapshot-store-spec", ConfigFactory.load("akka-application.conf")))

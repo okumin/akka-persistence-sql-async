@@ -1,10 +1,10 @@
 package akka.persistence.helper
 
 import akka.persistence.PluginSpec
-import akka.persistence.common.{ScalikeJDBCExtension, SQLAsyncConfig}
-import com.typesafe.config.{ConfigFactory, Config}
+import akka.persistence.common.{SQLAsyncConfig, ScalikeJDBCExtension}
+import com.typesafe.config.{Config, ConfigFactory}
 import scala.concurrent.duration._
-import scala.concurrent.{Future, Await}
+import scala.concurrent.{Await, Future}
 import scalikejdbc.SQL
 import scalikejdbc.async._
 
