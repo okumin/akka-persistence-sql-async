@@ -26,25 +26,25 @@ lazy val performanceTest = (project in file("performance-test"))
 
 lazy val commonSettings = Seq(
   organization := "com.okumin",
-  version := "0.2",
+  version := "0.3",
   scalaVersion := "2.11.7",
   parallelExecution in Test := false,
   libraryDependencies := commonDependencies
 )
 
-val akkaVersion = "2.3.12"
+val akkaVersion = "2.4.0-RC1"
 val mauricioVersion = "0.2.16"
 
 lazy val commonDependencies = Seq(
-  "com.typesafe.akka"   %% "akka-actor"                        % akkaVersion,
-  "com.typesafe.akka"   %% "akka-persistence-experimental"     % akkaVersion,
-  "org.scalikejdbc"     %% "scalikejdbc-async"                 % "0.5.5",
-  "com.github.mauricio" %% "mysql-async"                       % mauricioVersion % "provided",
-  "com.github.mauricio" %% "postgresql-async"                  % mauricioVersion % "provided",
-  "com.typesafe.akka"   %% "akka-persistence-tck-experimental" % akkaVersion     % "test",
-  "com.typesafe.akka"   %% "akka-slf4j"                        % akkaVersion     % "test",
-  "com.typesafe.akka"   %% "akka-testkit"                      % akkaVersion     % "test",
-  "org.slf4j"            % "slf4j-log4j12"                     % "1.7.12"        % "test"
+  "com.typesafe.akka"   %% "akka-actor"           % akkaVersion,
+  "com.typesafe.akka"   %% "akka-persistence"     % akkaVersion,
+  "org.scalikejdbc"     %% "scalikejdbc-async"    % "0.5.5",
+  "com.github.mauricio" %% "mysql-async"          % mauricioVersion % "provided",
+  "com.github.mauricio" %% "postgresql-async"     % mauricioVersion % "provided",
+  "com.typesafe.akka"   %% "akka-persistence-tck" % akkaVersion     % "test",
+  "com.typesafe.akka"   %% "akka-slf4j"           % akkaVersion     % "test",
+  "com.typesafe.akka"   %% "akka-testkit"         % akkaVersion     % "test",
+  "org.slf4j"            % "slf4j-log4j12"        % "1.7.12"        % "test"
 )
 
 lazy val publishSettings = Seq(

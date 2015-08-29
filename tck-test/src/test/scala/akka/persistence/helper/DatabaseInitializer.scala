@@ -2,7 +2,6 @@ package akka.persistence.helper
 
 import akka.persistence.PluginSpec
 import akka.persistence.common.{SQLAsyncConfig, ScalikeJDBCExtension}
-import com.typesafe.config.{Config, ConfigFactory}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scalikejdbc.SQL
@@ -41,17 +40,13 @@ trait DatabaseInitializer extends PluginSpec {
   }
 }
 
-trait MySQLInitializer extends DatabaseInitializer with PluginSpec {
-  override lazy val config: Config = ConfigFactory.load("mysql-application.conf")
-
+trait MySQLInitializer extends DatabaseInitializer {
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
         |  persistence_id VARCHAR(255) NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
-        |  marker VARCHAR(255) NOT NULL,
         |  message BLOB NOT NULL,
-        |  created_at TIMESTAMP NOT NULL,
         |  PRIMARY KEY (persistence_id, sequence_nr)
         |)
       """.stripMargin
@@ -70,17 +65,13 @@ trait MySQLInitializer extends DatabaseInitializer with PluginSpec {
   }
 }
 
-trait PostgreSQLInitializer extends DatabaseInitializer with PluginSpec {
-  override lazy val config: Config = ConfigFactory.load("postgresql-application.conf")
-
+trait PostgreSQLInitializer extends DatabaseInitializer {
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
         |  persistence_id VARCHAR(255) NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
-        |  marker VARCHAR(255) NOT NULL,
         |  message BYTEA NOT NULL,
-        |  created_at TIMESTAMP NOT NULL,
         |  PRIMARY KEY (persistence_id, sequence_nr)
         |)
       """.stripMargin
