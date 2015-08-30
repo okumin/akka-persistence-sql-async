@@ -25,11 +25,11 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with A
   }
 
   override def loadAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Option[SelectedSnapshot]] = {
-    log.debug(s"Load a snapshot, persistenceId = $persistenceId, criteria = $criteria")
+    log.debug("Load a snapshot, persistenceId = {}, criteria = {}", persistenceId, criteria)
     sessionProvider.withPool { implicit session =>
       val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) = criteria
       val sql = sql"SELECT * FROM $table WHERE persistence_id = $persistenceId AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp ORDER BY sequence_nr DESC LIMIT 1"
-      log.debug(s"Execute ${sql.statement} binding persistence_id = $persistenceId, $minSequenceNr <= sequence_nr <= $maxSequenceNr and $minTimestamp <= created_at <= $maxTimestamp")
+      log.debug("Execute {} binding persistence_id = {}, criteria = {}", sql.statement, persistenceId, criteria)
       sql.map { result =>
         val Snapshot(snapshot) = serialization.deserialize(result.bytes("snapshot"), classOf[Snapshot]).get
         SelectedSnapshot(
@@ -45,43 +45,43 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with A
       def insert(): Future[Unit] = {
         sessionProvider.localTx { implicit session =>
           val sql = sql"INSERT INTO $table (persistence_id, sequence_nr, created_at, snapshot) VALUES ($persistenceId, $sequenceNr, $timestamp, $snapshot)"
-          log.debug(s"Execute ${sql.statement}, binding persistence_id = $persistenceId, sequence_nr = $sequenceNr, created_at = $timestamp and snapshot = $snapshot")
+          log.debug("Execute {}, binding persistence_id = {}, sequence_nr = {}, created_at = {}", sql.statement, persistenceId, sequenceNr, timestamp)
           sql.update().future().map(_ => ())
         }
       }
       def update(): Future[Unit] = {
         sessionProvider.localTx { implicit session =>
           val sql = sql"UPDATE $table SET created_at = $timestamp, snapshot = $snapshot WHERE persistence_id = $persistenceId AND sequence_nr = $sequenceNr"
-          log.debug(s"Execute ${sql.statement}, binding persistence_id = $persistenceId, sequence_nr = $sequenceNr, created_at = $timestamp and snapshot = $snapshot")
+          log.debug("Execute {}, binding persistence_id = {}, sequence_nr = {}, created_at = {}", sql.statement, persistenceId, sequenceNr, timestamp)
           sql.update().future().map(_ => ())
         }
       }
       insert().recoverWith { case _ => update() }
     }
 
-    log.debug(s"Save the snapshot, metadata = $metadata, snapshot = $snapshot")
+    log.debug("Save the snapshot, metadata = {}, snapshot = {}", metadata, snapshot)
     val SnapshotMetadata(persistenceId, sequenceNr, timestamp) = metadata
     val bytes = serialization.serialize(Snapshot(snapshot)).get
     upsert(persistenceId, sequenceNr, timestamp, bytes)
   }
 
   override def deleteAsync(metadata: SnapshotMetadata): Future[Unit] = {
-    log.debug(s"Delete the snapshot, $metadata")
+    log.debug("Delete the snapshot, {}", metadata)
     sessionProvider.localTx { implicit session =>
       // Ignores the timestamp since the target is specified by the sequence_nr.
       val SnapshotMetadata(persistenceId, sequenceNr, _) = metadata
       val sql = sql"DELETE FROM $table WHERE persistence_id = $persistenceId AND sequence_nr = $sequenceNr"
-      log.debug(s"Execute ${sql.statement}, binding $metadata")
+      log.debug("Execute {}, binding {}", sql.statement, metadata)
       sql.update().future().map(_ => ())
     }
   }
 
   override def deleteAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Unit] = {
-    log.debug(s"Delete the snapshot for $persistenceId, criteria = $criteria")
+    log.debug("Delete the snapshot for {}, criteria = {}", persistenceId, criteria)
     sessionProvider.localTx { implicit session =>
       val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) = criteria
       val sql = sql"DELETE FROM $table WHERE persistence_id = $persistenceId AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp"
-      log.debug(s"Execute ${sql.statement}, binding persistence_id = $persistenceId, $minSequenceNr <= sequence_nr <= $maxSequenceNr and $minTimestamp <= created_at <= $maxTimestamp")
+      log.debug("Execute {}, binding persistence_id = {}, criteria = {}", sql.statement, persistenceId, criteria)
       sql.update().future().map(_ => ())
     }
   }

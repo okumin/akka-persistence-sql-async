@@ -32,7 +32,7 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
       }
     }
 
-    log.debug(s"Write messages, $messages")
+    log.debug("Write messages, {}", messages)
     // TODO: bulk insert
     sessionProvider.localTx { implicit session =>
       messages.foldLeft(Future.successful[List[Try[Unit]]](Nil)) { (result, write) =>
@@ -43,7 +43,7 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
               traverse(payloads) {
                 case (payload, bytes) =>
                   val sql = sql"INSERT INTO $table (persistence_id, sequence_nr, message) VALUES (${payload.persistenceId}, ${payload.sequenceNr}, $bytes)"
-                  log.debug(s"Execute ${sql.statement}, binding $payload")
+                  log.debug("Execute {}, binding {}", sql.statement, payload)
                   sql.update().future()
               }.map(_ => Success(()) :: rejects)
           }
@@ -53,19 +53,19 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
   }
 
   override def asyncDeleteMessagesTo(persistenceId: String, toSequenceNr: Long): Future[Unit] = {
-    log.debug(s"Delete messages, persistenceId = $persistenceId, toSequenceNr = $toSequenceNr")
+    log.debug("Delete messages, persistenceId = {}, toSequenceNr = {}", persistenceId, toSequenceNr)
     sessionProvider.localTx { implicit session =>
       val sql = sql"DELETE FROM $table WHERE persistence_id = $persistenceId AND sequence_nr <= $toSequenceNr"
-      log.debug(s"Execute ${sql.statement}, binding persistence_id = $persistenceId and sequence_nr = $toSequenceNr")
+      log.debug("Execute {}, binding persistence_id = {} and sequence_nr = {}", sql.statement, persistenceId, toSequenceNr)
       sql.update().future().map(_ => ())
     }
   }
 
   override def asyncReplayMessages(persistenceId: String, fromSequenceNr: Long, toSequenceNr: Long, max: Long)(replayCallback: (PersistentRepr) => Unit): Future[Unit] = {
-    log.debug(s"Replay messages, persistenceId = $persistenceId, fromSequenceNr = $fromSequenceNr, toSequenceNr = $toSequenceNr")
+    log.debug("Replay messages, persistenceId = {}, fromSequenceNr = {}, toSequenceNr = {}", persistenceId, fromSequenceNr, toSequenceNr)
     sessionProvider.withPool { implicit session =>
       val sql = sql"SELECT message FROM $table WHERE persistence_id = $persistenceId AND sequence_nr >= $fromSequenceNr AND sequence_nr <= $toSequenceNr ORDER BY sequence_nr ASC LIMIT $max"
-      log.debug(s"Execute ${sql.statement}, binding persistence_id = $persistenceId, from_sequence_nr = $fromSequenceNr, to_sequence_nr = $toSequenceNr, limit = $max")
+      log.debug("Execute {}, binding persistence_id = {}, from_sequence_nr = {}, to_sequence_nr = {}", sql.statement, persistenceId, fromSequenceNr, toSequenceNr)
       sql.map(_.bytes("message")).list().future().map { messages =>
         messages.foreach { bytes =>
           val message = persistenceFromBytes(bytes)
@@ -76,10 +76,10 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
   }
 
   override def asyncReadHighestSequenceNr(persistenceId: String, fromSequenceNr: Long): Future[Long] = {
-    log.debug(s"Read the highest sequence number, persistenceId = $persistenceId, fromSequenceNr = $fromSequenceNr")
+    log.debug("Read the highest sequence number, persistenceId = {}, fromSequenceNr = {}", persistenceId, fromSequenceNr)
     sessionProvider.withPool { implicit session =>
       val sql = sql"SELECT sequence_nr FROM $table WHERE persistence_id = $persistenceId ORDER BY sequence_nr DESC LIMIT 1"
-      log.debug(s"Execute ${sql.statement} binding persistence_id = $persistenceId and sequence_nr = $fromSequenceNr")
+      log.debug("Execute {} binding persistence_id = {} and sequence_nr = {}", sql.statement, persistenceId, fromSequenceNr)
       sql.map(_.longOpt(1)).single().future().map(_.flatten.getOrElse(0L))
     }
   }
