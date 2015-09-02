@@ -6,6 +6,7 @@ import akka.persistence.journal.AsyncWriteJournal
 import akka.persistence.{AtomicWrite, PersistentRepr}
 import akka.serialization.{Serialization, SerializationExtension}
 import scala.collection.immutable
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scalikejdbc._
@@ -23,32 +24,23 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
   }
 
   override def asyncWriteMessages(messages: immutable.Seq[AtomicWrite]): Future[immutable.Seq[Try[Unit]]] = {
-    def traverse[A, B](xs: Seq[A])(f: A => Future[B]): Future[Unit] = {
-      xs.foldLeft(Future.successful(())) { (result, x) =>
-        for {
-          a <- result
-          b <- f(x)
-        } yield ()
-      }
+    log.debug("Write messages, {}", messages)
+    val batch = ListBuffer.empty[SQLSyntax]
+    val result = messages.map { writes =>
+      writes.payload.foldLeft[Try[List[SQLSyntax]]](Success(Nil)) {
+        case (Success(xs), x) => serialization.serialize(x) match {
+          case Success(bytes) => Success(sqls"(${x.persistenceId}, ${x.sequenceNr}, $bytes)" :: xs)
+          case Failure(e) => Failure(e)
+        }
+        case (Failure(e), _) => Failure(e)
+      }.map(_.reverse).map(batch.append)
     }
 
-    log.debug("Write messages, {}", messages)
-    // TODO: bulk insert
+    val records = sqls.csv(batch: _*)
+    val sql = sql"INSERT INTO $table (persistence_id, sequence_nr, message) VALUES $records"
+    log.debug("Execute {}, binding {}", sql.statement, messages)
     sessionProvider.localTx { implicit session =>
-      messages.foldLeft(Future.successful[List[Try[Unit]]](Nil)) { (result, write) =>
-        result.flatMap { rejects =>
-          Try(write.payload.map { p => (p, persistenceToBytes(p) )}) match {
-            case Failure(e) => Future.successful(Failure(e) :: rejects)
-            case Success(payloads) =>
-              traverse(payloads) {
-                case (payload, bytes) =>
-                  val sql = sql"INSERT INTO $table (persistence_id, sequence_nr, message) VALUES (${payload.persistenceId}, ${payload.sequenceNr}, $bytes)"
-                  log.debug("Execute {}, binding {}", sql.statement, payload)
-                  sql.update().future()
-              }.map(_ => Success(()) :: rejects)
-          }
-        }
-      }.map(_.reverse)
+      sql.update().future().map(_ => result)
     }
   }
 
@@ -68,7 +60,7 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
       log.debug("Execute {}, binding persistence_id = {}, from_sequence_nr = {}, to_sequence_nr = {}", sql.statement, persistenceId, fromSequenceNr, toSequenceNr)
       sql.map(_.bytes("message")).list().future().map { messages =>
         messages.foreach { bytes =>
-          val message = persistenceFromBytes(bytes)
+          val message = serialization.deserialize(bytes, classOf[PersistentRepr]).get
           replayCallback(message)
         }
       }.map(_ => ())
@@ -82,12 +74,5 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
       log.debug("Execute {} binding persistence_id = {} and sequence_nr = {}", sql.statement, persistenceId, fromSequenceNr)
       sql.map(_.longOpt(1)).single().future().map(_.flatten.getOrElse(0L))
     }
-  }
-
-  private[this] def persistenceToBytes(repr: PersistentRepr): Array[Byte] = {
-    serialization.serialize(repr).get
-  }
-  private[this] def persistenceFromBytes(bytes: Array[Byte]): PersistentRepr = {
-    serialization.deserialize(bytes, classOf[PersistentRepr]).get
   }
 }
