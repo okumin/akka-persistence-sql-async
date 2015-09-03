@@ -40,25 +40,25 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with A
     }
   }
 
-  override def saveAsync(metadata: SnapshotMetadata, snapshot: Any): Future[Unit] = {
-    def upsert(persistenceId: String, sequenceNr: Long, timestamp: Long, snapshot: Array[Byte]): Future[Unit] = {
-      def insert(): Future[Unit] = {
-        sessionProvider.localTx { implicit session =>
-          val sql = sql"INSERT INTO $table (persistence_id, sequence_nr, created_at, snapshot) VALUES ($persistenceId, $sequenceNr, $timestamp, $snapshot)"
-          log.debug("Execute {}, binding persistence_id = {}, sequence_nr = {}, created_at = {}", sql.statement, persistenceId, sequenceNr, timestamp)
-          sql.update().future().map(_ => ())
-        }
+  protected[this] def upsert(persistenceId: String, sequenceNr: Long, timestamp: Long, snapshot: Array[Byte]): Future[Unit] = {
+    def insert(): Future[Unit] = {
+      sessionProvider.localTx { implicit session =>
+        val sql = sql"INSERT INTO $table (persistence_id, sequence_nr, created_at, snapshot) VALUES ($persistenceId, $sequenceNr, $timestamp, $snapshot)"
+        log.debug("Execute {}, binding persistence_id = {}, sequence_nr = {}, created_at = {}", sql.statement, persistenceId, sequenceNr, timestamp)
+        sql.update().future().map(_ => ())
       }
-      def update(): Future[Unit] = {
-        sessionProvider.localTx { implicit session =>
-          val sql = sql"UPDATE $table SET created_at = $timestamp, snapshot = $snapshot WHERE persistence_id = $persistenceId AND sequence_nr = $sequenceNr"
-          log.debug("Execute {}, binding persistence_id = {}, sequence_nr = {}, created_at = {}", sql.statement, persistenceId, sequenceNr, timestamp)
-          sql.update().future().map(_ => ())
-        }
-      }
-      insert().recoverWith { case _ => update() }
     }
+    def update(): Future[Unit] = {
+      sessionProvider.localTx { implicit session =>
+        val sql = sql"UPDATE $table SET created_at = $timestamp, snapshot = $snapshot WHERE persistence_id = $persistenceId AND sequence_nr = $sequenceNr"
+        log.debug("Execute {}, binding persistence_id = {}, sequence_nr = {}, created_at = {}", sql.statement, persistenceId, sequenceNr, timestamp)
+        sql.update().future().map(_ => ())
+      }
+    }
+    insert().recoverWith { case _ => update() }
+  }
 
+  override def saveAsync(metadata: SnapshotMetadata, snapshot: Any): Future[Unit] = {
     log.debug("Save the snapshot, metadata = {}, snapshot = {}", metadata, snapshot)
     val SnapshotMetadata(persistenceId, sequenceNr, timestamp) = metadata
     val bytes = serialization.serialize(Snapshot(snapshot)).get
