@@ -17,8 +17,8 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with A
 
   private[this] val serialization: Serialization = SerializationExtension(context.system)
   private[this] lazy val extension: ScalikeJDBCExtension = ScalikeJDBCExtension(context.system)
-  private[this] lazy val sessionProvider: ScalikeJDBCSessionProvider = extension.sessionProvider
-  private[this] lazy val table = {
+  protected[this] lazy val sessionProvider: ScalikeJDBCSessionProvider = extension.sessionProvider
+  protected[this] lazy val table = {
     val tableName = extension.config.snapshotTableName
     SQLSyntaxSupportFeature.verifyTableName(tableName)
     SQLSyntax.createUnsafely(tableName)
