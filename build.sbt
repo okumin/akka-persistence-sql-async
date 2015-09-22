@@ -8,6 +8,14 @@ lazy val core = (project in file("core"))
     name := "akka-persistence-sql-async"
   )
 
+lazy val persistenceQuery = (project in file("persistence-query"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "akka-persistence-query-sql-async",
+    libraryDependencies ++= persistenceQueryDependencies
+  )
+  .dependsOn(core)
+
 lazy val tckTest = (project in file("tck-test"))
   .settings(commonSettings: _*)
   .settings(
@@ -32,7 +40,7 @@ lazy val commonSettings = Seq(
   libraryDependencies := commonDependencies
 )
 
-val akkaVersion = "2.4.0-RC1"
+val akkaVersion = "2.4.0-RC3"
 val mauricioVersion = "0.2.16"
 
 lazy val commonDependencies = Seq(
@@ -45,6 +53,10 @@ lazy val commonDependencies = Seq(
   "com.typesafe.akka"   %% "akka-slf4j"           % akkaVersion     % "test",
   "com.typesafe.akka"   %% "akka-testkit"         % akkaVersion     % "test",
   "org.slf4j"            % "slf4j-log4j12"        % "1.7.12"        % "test"
+)
+
+lazy val persistenceQueryDependencies = Seq(
+  "com.typesafe.akka" %% "akka-persistence-query-experimental" % akkaVersion
 )
 
 lazy val publishSettings = Seq(
