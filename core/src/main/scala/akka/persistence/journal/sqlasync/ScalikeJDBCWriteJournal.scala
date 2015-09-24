@@ -23,6 +23,14 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
     SQLSyntax.createUnsafely(tableName)
   }
 
+  // Used in asyncReadHighestSequenceNr query 
+  private[this] lazy val snapshotsTable = {
+    val tableName = extension.config.snapshotTableName
+    SQLSyntaxSupportFeature.verifyTableName(tableName)
+    SQLSyntax.createUnsafely(tableName)
+  }
+
+
   override def asyncWriteMessages(messages: immutable.Seq[AtomicWrite]): Future[immutable.Seq[Try[Unit]]] = {
     log.debug("Write messages, {}", messages)
     val batch = ListBuffer.empty[SQLSyntax]
@@ -70,7 +78,15 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with A
   override def asyncReadHighestSequenceNr(persistenceId: String, fromSequenceNr: Long): Future[Long] = {
     log.debug("Read the highest sequence number, persistenceId = {}, fromSequenceNr = {}", persistenceId, fromSequenceNr)
     sessionProvider.withPool { implicit session =>
-      val sql = sql"SELECT sequence_nr FROM $table WHERE persistence_id = $persistenceId ORDER BY sequence_nr DESC LIMIT 1"
+      val sql = sql"""
+        SELECT
+          coalesce(max(max_ids.seq_nr), 0)
+        FROM (
+          SELECT max(sequence_nr) seq_nr FROM $table WHERE persistence_id = $persistenceId
+            UNION
+          SELECT max(sequence_nr) seq_nr FROM $snapshotsTable WHERE persistence_id = $persistenceId
+        ) AS max_ids
+      """
       log.debug("Execute {} binding persistence_id = {} and sequence_nr = {}", sql.statement, persistenceId, fromSequenceNr)
       sql.map(_.longOpt(1)).single().future().map(_.flatten.getOrElse(0L))
     }
