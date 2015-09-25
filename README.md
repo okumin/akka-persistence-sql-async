@@ -19,7 +19,7 @@ This library is tested against [akka-persistence-tck](http://doc.akka.io/docs/ak
 You should add the following dependency.
 
 ```
-libraryDependencies += "com.okumin" %% "akka-persistence-sql-async" % "0.2"
+libraryDependencies += "com.okumin" %% "akka-persistence-sql-async" % "0.2.1"
 ```
 
 And then, please include the mysql-async if you use MySQL.
