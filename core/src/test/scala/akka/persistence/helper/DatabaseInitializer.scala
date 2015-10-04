@@ -67,7 +67,7 @@ trait MySQLInitializer extends DatabaseInitializer {
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
-        |  persistence_id VARCHAR(255) NOT NULL,
+        |  persistence_id BIGINT NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
         |  message BLOB NOT NULL,
         |  PRIMARY KEY (persistence_id, sequence_nr)
@@ -104,7 +104,7 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
-        |  persistence_id VARCHAR(255) NOT NULL,
+        |  persistence_id BIGINT NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
         |  message BYTEA NOT NULL,
         |  PRIMARY KEY (persistence_id, sequence_nr)
