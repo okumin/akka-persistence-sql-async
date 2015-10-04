@@ -1,11 +1,11 @@
 package akka.persistence.journal.sqlasync
 
-import akka.persistence.common.{MySQLPluginSettings, PostgreSQLPluginSettings}
+import akka.persistence.common.{MySQLPlugin, PostgreSQLPlugin}
 import scala.concurrent.Future
 import scalikejdbc._
 import scalikejdbc.async.{TxAsyncDBSession, _}
 
-class MySQLAsyncWriteJournal extends ScalikeJDBCWriteJournal with MySQLPluginSettings {
+class MySQLAsyncWriteJournal extends ScalikeJDBCWriteJournal with MySQLPlugin {
   override protected[this] def updateSequenceNr(persistenceId: String, sequenceNr: Long)
                                                (implicit session: TxAsyncDBSession): Future[Unit] = {
     val sql = sql"INSERT INTO $metadataTable (persistence_id, sequence_nr) VALUES ($persistenceId, $sequenceNr) ON DUPLICATE KEY UPDATE sequence_nr = $sequenceNr"
@@ -13,7 +13,7 @@ class MySQLAsyncWriteJournal extends ScalikeJDBCWriteJournal with MySQLPluginSet
   }
 }
 
-class PostgreSQLAsyncWriteJournal extends ScalikeJDBCWriteJournal with PostgreSQLPluginSettings {
+class PostgreSQLAsyncWriteJournal extends ScalikeJDBCWriteJournal with PostgreSQLPlugin {
   override protected[this] def updateSequenceNr(persistenceId: String, sequenceNr: Long)
                                                (implicit session: TxAsyncDBSession): Future[Unit] = {
     val sql = sql"WITH upsert AS (UPDATE $metadataTable SET sequence_nr = $sequenceNr WHERE persistence_id = $persistenceId RETURNING *) INSERT INTO $metadataTable (persistence_id, sequence_nr) SELECT $persistenceId, $sequenceNr WHERE NOT EXISTS (SELECT * FROM upsert)"

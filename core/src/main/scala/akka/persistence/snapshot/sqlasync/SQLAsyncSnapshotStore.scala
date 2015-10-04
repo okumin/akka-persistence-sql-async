@@ -1,11 +1,11 @@
 package akka.persistence.snapshot.sqlasync
 
-import akka.persistence.common.{MySQLPluginSettings, PostgreSQLPluginSettings}
+import akka.persistence.common.{MySQLPlugin, PostgreSQLPlugin}
 import scala.concurrent.Future
 import scalikejdbc._
 import scalikejdbc.async._
 
-class MySQLSnapshotStore extends ScalikeJDBCSnapshotStore with MySQLPluginSettings {
+class MySQLSnapshotStore extends ScalikeJDBCSnapshotStore with MySQLPlugin {
   override protected[this] def upsert(persistenceId: String,
                                       sequenceNr: Long,
                                       timestamp: Long,
@@ -20,7 +20,7 @@ class MySQLSnapshotStore extends ScalikeJDBCSnapshotStore with MySQLPluginSettin
   }
 }
 
-class PostgreSQLSnapshotStore extends ScalikeJDBCSnapshotStore with PostgreSQLPluginSettings {
+class PostgreSQLSnapshotStore extends ScalikeJDBCSnapshotStore with PostgreSQLPlugin {
   override protected[this] def upsert(persistenceId: String,
                                       sequenceNr: Long,
                                       timestamp: Long,

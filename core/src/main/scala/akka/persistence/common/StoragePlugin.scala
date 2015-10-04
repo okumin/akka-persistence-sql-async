@@ -7,7 +7,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scalikejdbc._
 import scalikejdbc.async._
 
-private[persistence] trait PluginSettings extends Actor with ActorLogging {
+private[persistence] trait StoragePlugin extends Actor with ActorLogging {
   implicit protected[this] def persistenceExecutor: ExecutionContext = context.dispatcher
   protected[this] val serialization: Serialization = SerializationExtension(context.system)
   protected[this] lazy val extension: ScalikeJDBCExtension = ScalikeJDBCExtension(context.system)
@@ -48,14 +48,14 @@ private[persistence] trait PluginSettings extends Actor with ActorLogging {
   }
 }
 
-private[persistence] trait MySQLPluginSettings extends PluginSettings {
+private[persistence] trait MySQLPlugin extends StoragePlugin {
   override protected[this] def lastInsertId()(implicit session: TxAsyncDBSession): Future[Long] = {
     val sql = sql"SELECT LAST_INSERT_ID() AS id;"
     sql.map(_.long("id")).single().future().map(_.getOrElse(sys.error("Failed to fetch a last insert id.")))
   }
 }
 
-private[persistence] trait PostgreSQLPluginSettings extends PluginSettings {
+private[persistence] trait PostgreSQLPlugin extends StoragePlugin {
   override protected[this] def lastInsertId()(implicit session: TxAsyncDBSession): Future[Long] = {
     val sql = sql"SELECT LASTVAL() AS id;"
     sql.map(_.long("id")).single().future().map(_.getOrElse(sys.error("Failed to fetch a last insert id.")))

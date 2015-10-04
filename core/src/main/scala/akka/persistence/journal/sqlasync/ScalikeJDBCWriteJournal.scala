@@ -1,6 +1,6 @@
 package akka.persistence.journal.sqlasync
 
-import akka.persistence.common.PluginSettings
+import akka.persistence.common.StoragePlugin
 import akka.persistence.journal.AsyncWriteJournal
 import akka.persistence.{AtomicWrite, PersistentRepr}
 import scala.collection.immutable
@@ -9,7 +9,7 @@ import scala.util.{Success, Try}
 import scalikejdbc._
 import scalikejdbc.async._
 
-private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with PluginSettings {
+private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with StoragePlugin {
   private[this] lazy val journalTable = {
     val tableName = extension.config.journalTableName
     SQLSyntaxSupportFeature.verifyTableName(tableName)

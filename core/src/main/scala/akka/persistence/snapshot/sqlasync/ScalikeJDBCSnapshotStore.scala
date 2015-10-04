@@ -1,7 +1,7 @@
 package akka.persistence.snapshot.sqlasync
 
 import akka.persistence._
-import akka.persistence.common.PluginSettings
+import akka.persistence.common.StoragePlugin
 import akka.persistence.serialization.Snapshot
 import akka.persistence.snapshot.SnapshotStore
 import scala.concurrent.Future
@@ -9,7 +9,7 @@ import scalikejdbc._
 import scalikejdbc.async._
 import scalikejdbc.interpolation.SQLSyntax
 
-private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with PluginSettings {
+private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with StoragePlugin {
   protected[this] lazy val snapshotTable = {
     val tableName = extension.config.snapshotTableName
     SQLSyntaxSupportFeature.verifyTableName(tableName)
