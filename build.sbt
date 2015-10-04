@@ -1,5 +1,5 @@
 
-lazy val root = (project in file(".")).aggregate(core, tckTest)
+lazy val root = (project in file(".")).aggregate(core)
 
 lazy val core = (project in file("core"))
   .settings(commonSettings: _*)
@@ -16,20 +16,14 @@ lazy val persistenceQuery = (project in file("persistence-query"))
   )
   .dependsOn(core)
 
-lazy val tckTest = (project in file("tck-test"))
-  .settings(commonSettings: _*)
-  .settings(
-    name := "akka-persistence-sql-async-tck-test"
-  )
-  .dependsOn(core)
-
 lazy val performanceTest = (project in file("performance-test"))
   .settings(commonSettings: _*)
   .settings(
     name := "akka-persistence-sql-async-performance-test"
   )
   .dependsOn(
-    tckTest % "test->test"
+    core,
+    core % "test->test"
   )
 
 lazy val commonSettings = Seq(
