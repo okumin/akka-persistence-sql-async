@@ -21,8 +21,8 @@ trait DatabaseInitializer extends PluginSpec {
     }
     Await.result(result, 10.seconds)
   }
-  protected def createPersistenceIdTableDDL: String
-  protected def dropPersistenceIdTableDDL: String = {
+  protected def createMetadataTableDDL: String
+  protected def dropMetadataTableDDL: String = {
     s"DROP TABLE IF EXISTS ${sqlAsyncConfig.metadataTableName}"
   }
   protected def createJournalTableDDL: String
@@ -39,10 +39,10 @@ trait DatabaseInitializer extends PluginSpec {
    */
   protected override def beforeAll(): Unit = {
     val ddl = Seq(
-      dropPersistenceIdTableDDL,
       dropJournalTableDDL,
       dropSnapshotTableDDL,
-      createPersistenceIdTableDDL,
+      dropMetadataTableDDL,
+      createMetadataTableDDL,
       createJournalTableDDL,
       createSnapshotTableDDL
     )
@@ -52,7 +52,7 @@ trait DatabaseInitializer extends PluginSpec {
 }
 
 trait MySQLInitializer extends DatabaseInitializer {
-  override protected def createPersistenceIdTableDDL: String = {
+  override protected def createMetadataTableDDL: String = {
     s"""
        |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.metadataTableName} (
        |  persistence_key BIGINT NOT NULL AUTO_INCREMENT,
@@ -60,7 +60,7 @@ trait MySQLInitializer extends DatabaseInitializer {
        |  sequence_nr BIGINT NOT NULL,
        |  PRIMARY KEY (persistence_key),
        |  UNIQUE (persistence_id)
-       |)
+       |) ENGINE = InnoDB;
      """.stripMargin
   }
 
@@ -70,8 +70,9 @@ trait MySQLInitializer extends DatabaseInitializer {
         |  persistence_key BIGINT NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
         |  message BLOB NOT NULL,
-        |  PRIMARY KEY (persistence_key, sequence_nr)
-        |)
+        |  PRIMARY KEY (persistence_key, sequence_nr),
+        |  FOREIGN KEY (persistence_key) REFERENCES ${sqlAsyncConfig.metadataTableName} (persistence_key)
+        |) ENGINE = InnoDB;
       """.stripMargin
   }
 
@@ -82,14 +83,15 @@ trait MySQLInitializer extends DatabaseInitializer {
         |  sequence_nr BIGINT NOT NULL,
         |  created_at BIGINT NOT NULL,
         |  snapshot BLOB NOT NULL,
-        |  PRIMARY KEY (persistence_key, sequence_nr)
-        |)
+        |  PRIMARY KEY (persistence_key, sequence_nr),
+        |  FOREIGN KEY (persistence_key) REFERENCES ${sqlAsyncConfig.metadataTableName} (persistence_key)
+        |) ENGINE = InnoDB;
      """.stripMargin
   }
 }
 
 trait PostgreSQLInitializer extends DatabaseInitializer {
-  override protected def createPersistenceIdTableDDL: String = {
+  override protected def createMetadataTableDDL: String = {
     s"""
        |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.metadataTableName} (
        |  persistence_key BIGSERIAL NOT NULL,
@@ -104,7 +106,7 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
-        |  persistence_key BIGINT NOT NULL,
+        |  persistence_key BIGINT NOT NULL REFERENCES ${sqlAsyncConfig.metadataTableName}(persistence_key),
         |  sequence_nr BIGINT NOT NULL,
         |  message BYTEA NOT NULL,
         |  PRIMARY KEY (persistence_key, sequence_nr)
@@ -115,7 +117,7 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
   override protected def createSnapshotTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.snapshotTableName} (
-        |  persistence_key BIGINT NOT NULL,
+        |  persistence_key BIGINT NOT NULL REFERENCES ${sqlAsyncConfig.metadataTableName}(persistence_key),
         |  sequence_nr BIGINT NOT NULL,
         |  created_at BIGINT NOT NULL,
         |  snapshot BYTEA NOT NULL,
