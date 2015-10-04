@@ -40,7 +40,7 @@ lazy val commonSettings = Seq(
   libraryDependencies := commonDependencies
 )
 
-val akkaVersion = "2.4.0-RC3"
+val akkaVersion = "2.4.0"
 val mauricioVersion = "0.2.16"
 
 lazy val commonDependencies = Seq(
