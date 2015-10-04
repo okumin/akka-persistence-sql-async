@@ -21,6 +21,10 @@ trait DatabaseInitializer extends PluginSpec {
     }
     Await.result(result, 10.seconds)
   }
+  protected def createPersistenceIdTableDDL: String
+  protected def dropPersistenceIdTableDDL: String = {
+    s"DROP TABLE IF EXISTS ${sqlAsyncConfig.persistenceIdTableName}"
+  }
   protected def createJournalTableDDL: String
   private[this] def dropJournalTableDDL: String = {
     s"DROP TABLE IF EXISTS ${sqlAsyncConfig.journalTableName}"
@@ -34,13 +38,32 @@ trait DatabaseInitializer extends PluginSpec {
    * Flush DB.
    */
   protected override def beforeAll(): Unit = {
-    val ddl = Seq(dropJournalTableDDL, dropSnapshotTableDDL, createJournalTableDDL, createSnapshotTableDDL)
+    val ddl = Seq(
+      dropPersistenceIdTableDDL,
+      dropJournalTableDDL,
+      dropSnapshotTableDDL,
+      createPersistenceIdTableDDL,
+      createJournalTableDDL,
+      createSnapshotTableDDL
+    )
     executeDDL(ddl)
     super.beforeAll()
   }
 }
 
 trait MySQLInitializer extends DatabaseInitializer {
+  override protected def createPersistenceIdTableDDL: String = {
+    s"""
+       |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.persistenceIdTableName} (
+       |  id BIGINT NOT NULL AUTO_INCREMENT,
+       |  persistence_id VARCHAR(255) NOT NULL,
+       |  sequence_nr BIGINT NOT NULL,
+       |  PRIMARY KEY (id),
+       |  UNIQUE (persistence_id)
+       |)
+     """.stripMargin
+  }
+
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
@@ -66,6 +89,18 @@ trait MySQLInitializer extends DatabaseInitializer {
 }
 
 trait PostgreSQLInitializer extends DatabaseInitializer {
+  override protected def createPersistenceIdTableDDL: String = {
+    s"""
+       |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.persistenceIdTableName} (
+       |  id BIGSERIAL NOT NULL,
+       |  persistence_id VARCHAR(255) NOT NULL,
+       |  sequence_nr BIGINT NOT NULL,
+       |  PRIMARY KEY (id),
+       |  UNIQUE (persistence_id)
+       |)
+     """.stripMargin
+  }
+
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
