@@ -22,7 +22,7 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with P
       val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) = criteria
       for {
         key <- surrogateKeyOf(persistenceId)
-        sql = sql"SELECT * FROM $snapshotTable WHERE persistence_id = $key AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp ORDER BY sequence_nr DESC LIMIT 1"
+        sql = sql"SELECT * FROM $snapshotTable WHERE persistence_key = $key AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp ORDER BY sequence_nr DESC LIMIT 1"
         snapshot <- logging(sql).map { result =>
           val Snapshot(snapshot) = serialization.deserialize(result.bytes("snapshot"), classOf[Snapshot]).get
           SelectedSnapshot(
@@ -50,7 +50,7 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with P
       for {
         key <- surrogateKeyOf(persistenceId)
         // Ignores the timestamp since the target is specified by the sequence_nr.
-        sql = sql"DELETE FROM $snapshotTable WHERE persistence_id = $key AND sequence_nr = $sequenceNr"
+        sql = sql"DELETE FROM $snapshotTable WHERE persistence_key = $key AND sequence_nr = $sequenceNr"
         _ <- logging(sql).update().future()
       } yield ()
     }
@@ -62,7 +62,7 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with P
     sessionProvider.localTx { implicit session =>
       for {
         key <- surrogateKeyOf(persistenceId)
-        sql = sql"DELETE FROM $snapshotTable WHERE persistence_id = $key AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp"
+        sql = sql"DELETE FROM $snapshotTable WHERE persistence_key = $key AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp"
         _ <- logging(sql).update().future()
       } yield ()
     }

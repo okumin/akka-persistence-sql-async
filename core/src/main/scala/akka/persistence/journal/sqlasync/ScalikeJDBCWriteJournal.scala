@@ -38,7 +38,7 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with P
       for {
         b <- batch
         records = sqls.csv(b.map(_.getOrElse(Nil)).flatten: _*)
-        sql = sql"INSERT INTO $journalTable (persistence_id, sequence_nr, message) VALUES $records"
+        sql = sql"INSERT INTO $journalTable (persistence_key, sequence_nr, message) VALUES $records"
         _ <- logging(sql).update().future()
         result <- b.foldLeft(Future.successful[Vector[Try[Unit]]](Vector.empty)) { (acc, x) =>
           acc.map(_ :+ x.map(_ => ()))
@@ -52,8 +52,8 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with P
     sessionProvider.localTx { implicit session =>
       for {
         key <- surrogateKeyOf(persistenceId)
-        select = sql"SELECT sequence_nr FROM $journalTable WHERE persistence_id = $key ORDER BY sequence_nr DESC LIMIT 1"
-        delete = sql"DELETE FROM $journalTable WHERE persistence_id = $key AND sequence_nr <= $toSequenceNr"
+        select = sql"SELECT sequence_nr FROM $journalTable WHERE persistence_key = $key ORDER BY sequence_nr DESC LIMIT 1"
+        delete = sql"DELETE FROM $journalTable WHERE persistence_key = $key AND sequence_nr <= $toSequenceNr"
         highest <- logging(select).map(_.long("sequence_nr")).single().future().map(_.getOrElse(0L))
         _ <- logging(delete).update().future()
         _ <- if (highest <= toSequenceNr) updateSequenceNr(persistenceId, highest) else Future.successful(())
@@ -66,7 +66,7 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with P
     sessionProvider.localTx { implicit session =>
       for {
         key <- surrogateKeyOf(persistenceId)
-        sql = sql"SELECT message FROM $journalTable WHERE persistence_id = $key AND sequence_nr >= $fromSequenceNr AND sequence_nr <= $toSequenceNr ORDER BY sequence_nr ASC LIMIT $max"
+        sql = sql"SELECT message FROM $journalTable WHERE persistence_key = $key AND sequence_nr >= $fromSequenceNr AND sequence_nr <= $toSequenceNr ORDER BY sequence_nr ASC LIMIT $max"
         _ <- logging(sql).map(_.bytes("message")).list().future().map { messages =>
           messages.foreach { bytes =>
             val message = serialization.deserialize(bytes, classOf[PersistentRepr]).get
@@ -80,13 +80,13 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with P
   override def asyncReadHighestSequenceNr(persistenceId: String, fromSequenceNr: Long): Future[Long] = {
     log.debug("Read the highest sequence number, persistenceId = {}, fromSequenceNr = {}", persistenceId, fromSequenceNr)
     sessionProvider.localTx { implicit session =>
-      val fromPersistenceIdTable = sql"SELECT id, sequence_nr FROM $persistenceIdTable WHERE persistence_id = $persistenceId"
+      val fromPersistenceIdTable = sql"SELECT persistence_key, sequence_nr FROM $persistenceIdTable WHERE persistence_id = $persistenceId"
       logging(fromPersistenceIdTable).map { result =>
-          (result.long("id"), result.long("sequence_nr"))
+          (result.long("persistence_key"), result.long("sequence_nr"))
       }.single().future().flatMap {
         case None => Future.successful(fromSequenceNr)
         case Some((key, sequenceNr)) =>
-          val fromJournalTable = sql"SELECT sequence_nr FROM $journalTable WHERE persistence_id = $key ORDER BY sequence_nr DESC LIMIT 1"
+          val fromJournalTable = sql"SELECT sequence_nr FROM $journalTable WHERE persistence_key = $key ORDER BY sequence_nr DESC LIMIT 1"
           logging(fromJournalTable).map(_.long("sequence_nr")).single().future().map(_.getOrElse(0L))
       }
     }

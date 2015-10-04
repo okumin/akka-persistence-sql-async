@@ -25,8 +25,8 @@ private[persistence] trait PluginSettings extends Actor with ActorLogging {
     persistenceIds.get(persistenceId) match {
       case Some(id) => Future.successful(id)
       case None =>
-        val select = sql"SELECT id FROM $persistenceIdTable WHERE persistence_id = $persistenceId"
-        select.map(_.long("id")).single().future().flatMap {
+        val select = sql"SELECT persistence_key FROM $persistenceIdTable WHERE persistence_id = $persistenceId"
+        select.map(_.long("persistence_key")).single().future().flatMap {
           case Some(id) =>
             persistenceIds.update(persistenceId, id)
             Future.successful(id)
@@ -51,13 +51,13 @@ private[persistence] trait PluginSettings extends Actor with ActorLogging {
 private[persistence] trait MySQLPluginSettings extends PluginSettings {
   override protected[this] def lastInsertId()(implicit session: TxAsyncDBSession): Future[Long] = {
     val sql = sql"SELECT LAST_INSERT_ID() AS id;"
-    sql.map(_.long("id")).single().future().map(_.get)
+    sql.map(_.long("id")).single().future().map(_.getOrElse(sys.error("Failed to fetch a last insert id.")))
   }
 }
 
 private[persistence] trait PostgreSQLPluginSettings extends PluginSettings {
   override protected[this] def lastInsertId()(implicit session: TxAsyncDBSession): Future[Long] = {
     val sql = sql"SELECT LASTVAL() AS id;"
-    sql.map(_.long("id")).single().future().map(_.get)
+    sql.map(_.long("id")).single().future().map(_.getOrElse(sys.error("Failed to fetch a last insert id.")))
   }
 }

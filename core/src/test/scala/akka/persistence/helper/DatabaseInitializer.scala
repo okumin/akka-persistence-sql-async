@@ -55,10 +55,10 @@ trait MySQLInitializer extends DatabaseInitializer {
   override protected def createPersistenceIdTableDDL: String = {
     s"""
        |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.metadataTableName} (
-       |  id BIGINT NOT NULL AUTO_INCREMENT,
+       |  persistence_key BIGINT NOT NULL AUTO_INCREMENT,
        |  persistence_id VARCHAR(255) NOT NULL,
        |  sequence_nr BIGINT NOT NULL,
-       |  PRIMARY KEY (id),
+       |  PRIMARY KEY (persistence_key),
        |  UNIQUE (persistence_id)
        |)
      """.stripMargin
@@ -67,10 +67,10 @@ trait MySQLInitializer extends DatabaseInitializer {
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
-        |  persistence_id BIGINT NOT NULL,
+        |  persistence_key BIGINT NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
         |  message BLOB NOT NULL,
-        |  PRIMARY KEY (persistence_id, sequence_nr)
+        |  PRIMARY KEY (persistence_key, sequence_nr)
         |)
       """.stripMargin
   }
@@ -78,11 +78,11 @@ trait MySQLInitializer extends DatabaseInitializer {
   override protected def createSnapshotTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.snapshotTableName} (
-        |  persistence_id BIGINT NOT NULL,
+        |  persistence_key BIGINT NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
         |  created_at BIGINT NOT NULL,
         |  snapshot BLOB NOT NULL,
-        |  PRIMARY KEY (persistence_id, sequence_nr)
+        |  PRIMARY KEY (persistence_key, sequence_nr)
         |)
      """.stripMargin
   }
@@ -92,10 +92,10 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
   override protected def createPersistenceIdTableDDL: String = {
     s"""
        |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.metadataTableName} (
-       |  id BIGSERIAL NOT NULL,
+       |  persistence_key BIGSERIAL NOT NULL,
        |  persistence_id VARCHAR(255) NOT NULL,
        |  sequence_nr BIGINT NOT NULL,
-       |  PRIMARY KEY (id),
+       |  PRIMARY KEY (persistence_key),
        |  UNIQUE (persistence_id)
        |)
      """.stripMargin
@@ -104,10 +104,10 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
   override protected def createJournalTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.journalTableName} (
-        |  persistence_id BIGINT NOT NULL,
+        |  persistence_key BIGINT NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
         |  message BYTEA NOT NULL,
-        |  PRIMARY KEY (persistence_id, sequence_nr)
+        |  PRIMARY KEY (persistence_key, sequence_nr)
         |)
       """.stripMargin
   }
@@ -115,11 +115,11 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
   override protected def createSnapshotTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.snapshotTableName} (
-        |  persistence_id BIGINT NOT NULL,
+        |  persistence_key BIGINT NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
         |  created_at BIGINT NOT NULL,
         |  snapshot BYTEA NOT NULL,
-        |  PRIMARY KEY (persistence_id, sequence_nr)
+        |  PRIMARY KEY (persistence_key, sequence_nr)
         |)
      """.stripMargin
   }
