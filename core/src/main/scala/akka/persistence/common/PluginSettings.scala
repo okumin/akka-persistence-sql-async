@@ -13,7 +13,7 @@ private[persistence] trait PluginSettings extends Actor with ActorLogging {
   protected[this] lazy val extension: ScalikeJDBCExtension = ScalikeJDBCExtension(context.system)
   protected[this] lazy val sessionProvider: ScalikeJDBCSessionProvider = extension.sessionProvider
 
-  protected[this] lazy val persistenceIdTable = {
+  protected[this] lazy val metadataTable = {
     val tableName = extension.config.metadataTableName
     SQLSyntaxSupportFeature.verifyTableName(tableName)
     SQLSyntax.createUnsafely(tableName)
@@ -25,13 +25,13 @@ private[persistence] trait PluginSettings extends Actor with ActorLogging {
     persistenceIds.get(persistenceId) match {
       case Some(id) => Future.successful(id)
       case None =>
-        val select = sql"SELECT persistence_key FROM $persistenceIdTable WHERE persistence_id = $persistenceId"
+        val select = sql"SELECT persistence_key FROM $metadataTable WHERE persistence_id = $persistenceId"
         select.map(_.long("persistence_key")).single().future().flatMap {
           case Some(id) =>
             persistenceIds.update(persistenceId, id)
             Future.successful(id)
           case None =>
-            val insert = sql"INSERT INTO $persistenceIdTable (persistence_id, sequence_nr) VALUES ($persistenceId, 0)"
+            val insert = sql"INSERT INTO $metadataTable (persistence_id, sequence_nr) VALUES ($persistenceId, 0)"
             for {
               _ <- insert.update().future()
               id <- lastInsertId()

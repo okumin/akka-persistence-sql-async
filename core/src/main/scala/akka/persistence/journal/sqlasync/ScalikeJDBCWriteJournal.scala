@@ -5,7 +5,7 @@ import akka.persistence.journal.AsyncWriteJournal
 import akka.persistence.{AtomicWrite, PersistentRepr}
 import scala.collection.immutable
 import scala.concurrent.Future
-import scala.util.Try
+import scala.util.{Success, Try}
 import scalikejdbc._
 import scalikejdbc.async._
 
@@ -19,30 +19,35 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with P
   protected[this] def updateSequenceNr(persistenceId: String, sequenceNr: Long)(implicit session: TxAsyncDBSession): Future[Unit]
 
   override def asyncWriteMessages(messages: immutable.Seq[AtomicWrite]): Future[immutable.Seq[Try[Unit]]] = {
-    log.debug("Write messages, {}", messages)
-    sessionProvider.localTx { implicit session =>
-      val batch = messages.foldLeft(Future.successful[Vector[Try[Vector[SQLSyntax]]]](Vector.empty)) { (acc, writes) =>
-        for {
-          lists <- acc
-          key <- surrogateKeyOf(writes.persistenceId)
-        } yield {
-          lists :+ writes.payload.foldLeft(Try[Vector[SQLSyntax]](Vector.empty)) { (ss, x) =>
-            for {
-              xs <- ss
-              bytes <- serialization.serialize(x)
-            } yield xs :+ sqls"($key, ${x.sequenceNr}, $bytes)"
-          }
+    def serialize(keys: Map[String, Long]): (SQLSyntax, immutable.Seq[Try[Unit]]) = {
+      val result = messages.map { write =>
+        write.payload.foldLeft(Try(Vector.empty[SQLSyntax])) { (acc, x) =>
+          for {
+            a <- acc
+            bytes <- serialization.serialize(x)
+          } yield a :+ sqls"(${keys(x.persistenceId)}, ${x.sequenceNr}, $bytes)"
         }
       }
+      val batch = result.collect {
+        case Success(x) => x
+      }.flatten
+      (sqls.csv(batch: _*), result.map(_.map(_ => ())))
+    }
+
+    log.debug("Write messages, {}", messages)
+    sessionProvider.localTx { implicit session =>
+      val persistenceIds = messages.map(_.persistenceId).toSet
 
       for {
-        b <- batch
-        records = sqls.csv(b.map(_.getOrElse(Nil)).flatten: _*)
-        sql = sql"INSERT INTO $journalTable (persistence_key, sequence_nr, message) VALUES $records"
-        _ <- logging(sql).update().future()
-        result <- b.foldLeft(Future.successful[Vector[Try[Unit]]](Vector.empty)) { (acc, x) =>
-          acc.map(_ :+ x.map(_ => ()))
+        keys <- persistenceIds.foldLeft(Future.successful(Map.empty[String, Long])) { (acc, id) =>
+          for {
+            map <- acc
+            persistenceKey <- surrogateKeyOf(id)
+          } yield map.updated(id, persistenceKey)
         }
+        (batch, result) = serialize(keys)
+        sql = sql"INSERT INTO $journalTable (persistence_key, sequence_nr, message) VALUES $batch"
+        _ <- logging(sql).update().future()
       } yield result
     }
   }
@@ -53,8 +58,8 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with P
       for {
         key <- surrogateKeyOf(persistenceId)
         select = sql"SELECT sequence_nr FROM $journalTable WHERE persistence_key = $key ORDER BY sequence_nr DESC LIMIT 1"
-        delete = sql"DELETE FROM $journalTable WHERE persistence_key = $key AND sequence_nr <= $toSequenceNr"
         highest <- logging(select).map(_.long("sequence_nr")).single().future().map(_.getOrElse(0L))
+        delete = sql"DELETE FROM $journalTable WHERE persistence_key = $key AND sequence_nr <= $toSequenceNr"
         _ <- logging(delete).update().future()
         _ <- if (highest <= toSequenceNr) updateSequenceNr(persistenceId, highest) else Future.successful(())
       } yield ()
@@ -80,14 +85,17 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with P
   override def asyncReadHighestSequenceNr(persistenceId: String, fromSequenceNr: Long): Future[Long] = {
     log.debug("Read the highest sequence number, persistenceId = {}, fromSequenceNr = {}", persistenceId, fromSequenceNr)
     sessionProvider.localTx { implicit session =>
-      val fromPersistenceIdTable = sql"SELECT persistence_key, sequence_nr FROM $persistenceIdTable WHERE persistence_id = $persistenceId"
-      logging(fromPersistenceIdTable).map { result =>
-          (result.long("persistence_key"), result.long("sequence_nr"))
+      val fromMetadataTable = sql"SELECT persistence_key, sequence_nr FROM $metadataTable WHERE persistence_id = $persistenceId"
+      logging(fromMetadataTable).map { result =>
+        (result.long("persistence_key"), result.long("sequence_nr"))
       }.single().future().flatMap {
-        case None => Future.successful(fromSequenceNr)
-        case Some((key, sequenceNr)) =>
+        case None => Future.successful(fromSequenceNr) // No persistent record exists.
+        case Some((key, fromMetadata)) =>
           val fromJournalTable = sql"SELECT sequence_nr FROM $journalTable WHERE persistence_key = $key ORDER BY sequence_nr DESC LIMIT 1"
-          logging(fromJournalTable).map(_.long("sequence_nr")).single().future().map(_.getOrElse(0L))
+          logging(fromJournalTable).map(_.long("sequence_nr")).single().future().map {
+            case Some(fromJournal) => fromJournal max fromMetadata max fromSequenceNr
+            case None => fromMetadata max fromSequenceNr
+          }
       }
     }
   }
