@@ -1,57 +1,22 @@
 package akka.persistence.journal.sqlasync
 
-import akka.actor.ActorLogging
-import akka.persistence.common.{ScalikeJDBCExtension, ScalikeJDBCSessionProvider}
+import akka.persistence.common.PluginSettings
 import akka.persistence.journal.AsyncWriteJournal
 import akka.persistence.{AtomicWrite, PersistentRepr}
-import akka.serialization.{Serialization, SerializationExtension}
-import scala.collection.concurrent.TrieMap
 import scala.collection.immutable
 import scala.concurrent.Future
 import scala.util.Try
 import scalikejdbc._
 import scalikejdbc.async._
 
-private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with ActorLogging {
-  import context.dispatcher
-  private[this] val serialization: Serialization = SerializationExtension(context.system)
-  private[this] lazy val extension: ScalikeJDBCExtension = ScalikeJDBCExtension(context.system)
-  private[this] lazy val sessionProvider: ScalikeJDBCSessionProvider = extension.sessionProvider
-
-  protected[this] lazy val persistenceIdTable = {
-    val tableName = extension.config.persistenceIdTableName
-    SQLSyntaxSupportFeature.verifyTableName(tableName)
-    SQLSyntax.createUnsafely(tableName)
-  }
+private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with PluginSettings {
   private[this] lazy val journalTable = {
     val tableName = extension.config.journalTableName
     SQLSyntaxSupportFeature.verifyTableName(tableName)
     SQLSyntax.createUnsafely(tableName)
   }
 
-  // PersistenceId => its surrogate key
-  protected[this] val persistenceIds: TrieMap[String, Long] = TrieMap.empty
-  private[this] def surrogateKeyOf(persistenceId: String)(implicit session: TxAsyncDBSession): Future[Long] = {
-    persistenceIds.get(persistenceId) match {
-      case Some(id) => Future.successful(id)
-      case None =>
-        val select = sql"SELECT id FROM $persistenceIdTable WHERE persistence_id = $persistenceId"
-        select.map(_.long("id")).single().future().flatMap {
-          case Some(id) =>
-            persistenceIds.update(persistenceId, id)
-            Future.successful(id)
-          case None =>
-            val insert = sql"INSERT INTO $persistenceIdTable (persistence_id, sequence_nr) VALUES ($persistenceId, 0)"
-            for {
-              _ <- insert.update().future()
-              id <- lastInsertId()
-            } yield id
-        }
-    }
-  }
-
   protected[this] def updateSequenceNr(persistenceId: String, sequenceNr: Long)(implicit session: TxAsyncDBSession): Future[Unit]
-  protected[this] def lastInsertId()(implicit session: TxAsyncDBSession): Future[Long]
 
   override def asyncWriteMessages(messages: immutable.Seq[AtomicWrite]): Future[immutable.Seq[Try[Unit]]] = {
     log.debug("Write messages, {}", messages)
