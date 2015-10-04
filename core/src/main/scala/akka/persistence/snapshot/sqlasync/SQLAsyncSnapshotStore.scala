@@ -11,8 +11,11 @@ class MySQLSnapshotStore extends ScalikeJDBCSnapshotStore with MySQLPluginSettin
                                       timestamp: Long,
                                       snapshot: Array[Byte]): Future[Unit] = {
     sessionProvider.localTx { implicit session =>
-      val sql = sql"INSERT INTO $snapshotTable (persistence_id, sequence_nr, created_at, snapshot) VALUES ($persistenceId, $sequenceNr, $timestamp, $snapshot) ON DUPLICATE KEY UPDATE created_at = $timestamp, snapshot = $snapshot"
-      logging(sql).update().future().map(_ => ())
+      for {
+        key <- surrogateKeyOf(persistenceId)
+        sql = sql"INSERT INTO $snapshotTable (persistence_id, sequence_nr, created_at, snapshot) VALUES ($key, $sequenceNr, $timestamp, $snapshot) ON DUPLICATE KEY UPDATE created_at = $timestamp, snapshot = $snapshot"
+        _ <- logging(sql).update().future()
+      } yield ()
     }
   }
 }
@@ -23,9 +26,11 @@ class PostgreSQLSnapshotStore extends ScalikeJDBCSnapshotStore with PostgreSQLPl
                                       timestamp: Long,
                                       snapshot: Array[Byte]): Future[Unit] = {
     sessionProvider.localTx { implicit session =>
-      val sql = sql"WITH upsert AS (UPDATE $snapshotTable SET created_at = $timestamp, snapshot = $snapshot WHERE persistence_id = $persistenceId AND sequence_nr = $sequenceNr RETURNING *) INSERT INTO $snapshotTable (persistence_id, sequence_nr, created_at, snapshot) SELECT $persistenceId, $sequenceNr, $timestamp, $snapshot WHERE NOT EXISTS (SELECT * FROM upsert)"
-      log.debug("Execute {}, binding persistence_id = {}, sequence_nr = {}, created_at = {}", sql.statement, persistenceId, sequenceNr, timestamp)
-      logging(sql).update().future().map(_ => ())
+      for {
+        key <- surrogateKeyOf(persistenceId)
+        sql = sql"WITH upsert AS (UPDATE $snapshotTable SET created_at = $timestamp, snapshot = $snapshot WHERE persistence_id = $key AND sequence_nr = $sequenceNr RETURNING *) INSERT INTO $snapshotTable (persistence_id, sequence_nr, created_at, snapshot) SELECT $key, $sequenceNr, $timestamp, $snapshot WHERE NOT EXISTS (SELECT * FROM upsert)"
+        _ <- logging(sql).update().future()
+      } yield ()
     }
   }
 }

@@ -78,7 +78,7 @@ trait MySQLInitializer extends DatabaseInitializer {
   override protected def createSnapshotTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.snapshotTableName} (
-        |  persistence_id VARCHAR(255) NOT NULL,
+        |  persistence_id BIGINT NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
         |  created_at BIGINT NOT NULL,
         |  snapshot BLOB NOT NULL,
@@ -115,7 +115,7 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
   override protected def createSnapshotTableDDL: String = {
     s"""
         |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.snapshotTableName} (
-        |  persistence_id VARCHAR(255) NOT NULL,
+        |  persistence_id BIGINT NOT NULL,
         |  sequence_nr BIGINT NOT NULL,
         |  created_at BIGINT NOT NULL,
         |  snapshot BYTEA NOT NULL,

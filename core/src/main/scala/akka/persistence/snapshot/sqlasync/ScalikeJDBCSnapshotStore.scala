@@ -18,16 +18,19 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with P
 
   override def loadAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Option[SelectedSnapshot]] = {
     log.debug("Load a snapshot, persistenceId = {}, criteria = {}", persistenceId, criteria)
-    sessionProvider.withPool { implicit session =>
+    sessionProvider.localTx { implicit session =>
       val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) = criteria
-      val sql = sql"SELECT * FROM $snapshotTable WHERE persistence_id = $persistenceId AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp ORDER BY sequence_nr DESC LIMIT 1"
-      logging(sql).map { result =>
-        val Snapshot(snapshot) = serialization.deserialize(result.bytes("snapshot"), classOf[Snapshot]).get
-        SelectedSnapshot(
-          SnapshotMetadata(result.string("persistence_id"), result.long("sequence_nr"), result.long("created_at")),
-          snapshot
-        )
-      }.single().future()
+      for {
+        key <- surrogateKeyOf(persistenceId)
+        sql = sql"SELECT * FROM $snapshotTable WHERE persistence_id = $key AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp ORDER BY sequence_nr DESC LIMIT 1"
+        snapshot <- logging(sql).map { result =>
+          val Snapshot(snapshot) = serialization.deserialize(result.bytes("snapshot"), classOf[Snapshot]).get
+          SelectedSnapshot(
+            SnapshotMetadata(persistenceId, result.long("sequence_nr"), result.long("created_at")),
+            snapshot
+          )
+        }.single().future()
+      } yield snapshot
     }
   }
 
@@ -42,20 +45,26 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with P
 
   override def deleteAsync(metadata: SnapshotMetadata): Future[Unit] = {
     log.debug("Delete the snapshot, {}", metadata)
+    val SnapshotMetadata(persistenceId, sequenceNr, _) = metadata
     sessionProvider.localTx { implicit session =>
-      // Ignores the timestamp since the target is specified by the sequence_nr.
-      val SnapshotMetadata(persistenceId, sequenceNr, _) = metadata
-      val sql = sql"DELETE FROM $snapshotTable WHERE persistence_id = $persistenceId AND sequence_nr = $sequenceNr"
-      logging(sql).update().future().map(_ => ())
+      for {
+        key <- surrogateKeyOf(persistenceId)
+        // Ignores the timestamp since the target is specified by the sequence_nr.
+        sql = sql"DELETE FROM $snapshotTable WHERE persistence_id = $key AND sequence_nr = $sequenceNr"
+        _ <- logging(sql).update().future()
+      } yield ()
     }
   }
 
   override def deleteAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Unit] = {
     log.debug("Delete the snapshot for {}, criteria = {}", persistenceId, criteria)
+    val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) = criteria
     sessionProvider.localTx { implicit session =>
-      val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) = criteria
-      val sql = sql"DELETE FROM $snapshotTable WHERE persistence_id = $persistenceId AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp"
-      logging(sql).update().future().map(_ => ())
+      for {
+        key <- surrogateKeyOf(persistenceId)
+        sql = sql"DELETE FROM $snapshotTable WHERE persistence_id = $key AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp"
+        _ <- logging(sql).update().future()
+      } yield ()
     }
   }
 }
