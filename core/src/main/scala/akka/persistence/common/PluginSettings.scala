@@ -41,6 +41,11 @@ private[persistence] trait PluginSettings extends Actor with ActorLogging {
   }
 
   protected[this] def lastInsertId()(implicit session: TxAsyncDBSession): Future[Long]
+
+  protected[this] def logging(sql: SQL[Nothing, NoExtractor]): SQL[Nothing, NoExtractor] = {
+    log.debug(s"Execute {} binding {}", sql.statement, sql.parameters)
+    sql
+  }
 }
 
 private[persistence] trait MySQLPluginSettings extends PluginSettings {
