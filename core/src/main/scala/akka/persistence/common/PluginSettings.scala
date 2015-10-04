@@ -14,7 +14,7 @@ private[persistence] trait PluginSettings extends Actor with ActorLogging {
   protected[this] lazy val sessionProvider: ScalikeJDBCSessionProvider = extension.sessionProvider
 
   protected[this] lazy val persistenceIdTable = {
-    val tableName = extension.config.persistenceIdTableName
+    val tableName = extension.config.metadataTableName
     SQLSyntaxSupportFeature.verifyTableName(tableName)
     SQLSyntax.createUnsafely(tableName)
   }

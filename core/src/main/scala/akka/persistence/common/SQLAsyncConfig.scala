@@ -12,7 +12,7 @@ private[persistence] class SQLAsyncConfig(val system: ActorSystem) {
   val maxPoolSize = config.getInt("max-pool-size")
   val waitQueueCapacity = config.getInt("wait-queue-capacity")
 
-  val persistenceIdTableName = config.getString("persistence-id-table-name")
+  val metadataTableName = config.getString("metadata-table-name")
   val journalTableName = config.getString("journal-table-name")
   val snapshotTableName = config.getString("snapshot-table-name")
 }

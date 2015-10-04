@@ -23,7 +23,7 @@ trait DatabaseInitializer extends PluginSpec {
   }
   protected def createPersistenceIdTableDDL: String
   protected def dropPersistenceIdTableDDL: String = {
-    s"DROP TABLE IF EXISTS ${sqlAsyncConfig.persistenceIdTableName}"
+    s"DROP TABLE IF EXISTS ${sqlAsyncConfig.metadataTableName}"
   }
   protected def createJournalTableDDL: String
   private[this] def dropJournalTableDDL: String = {
@@ -54,7 +54,7 @@ trait DatabaseInitializer extends PluginSpec {
 trait MySQLInitializer extends DatabaseInitializer {
   override protected def createPersistenceIdTableDDL: String = {
     s"""
-       |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.persistenceIdTableName} (
+       |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.metadataTableName} (
        |  id BIGINT NOT NULL AUTO_INCREMENT,
        |  persistence_id VARCHAR(255) NOT NULL,
        |  sequence_nr BIGINT NOT NULL,
@@ -91,7 +91,7 @@ trait MySQLInitializer extends DatabaseInitializer {
 trait PostgreSQLInitializer extends DatabaseInitializer {
   override protected def createPersistenceIdTableDDL: String = {
     s"""
-       |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.persistenceIdTableName} (
+       |CREATE TABLE IF NOT EXISTS ${sqlAsyncConfig.metadataTableName} (
        |  id BIGSERIAL NOT NULL,
        |  persistence_id VARCHAR(255) NOT NULL,
        |  sequence_nr BIGINT NOT NULL,
