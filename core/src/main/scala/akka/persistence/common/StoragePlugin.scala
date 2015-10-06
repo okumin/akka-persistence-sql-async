@@ -35,7 +35,10 @@ private[persistence] trait StoragePlugin extends Actor with ActorLogging {
             for {
               _ <- insert.update().future()
               id <- lastInsertId()
-            } yield id
+            } yield {
+              persistenceIds.update(persistenceId, id)
+              id
+            }
         }
     }
   }
