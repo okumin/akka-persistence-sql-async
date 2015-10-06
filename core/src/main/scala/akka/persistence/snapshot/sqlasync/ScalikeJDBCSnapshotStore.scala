@@ -22,7 +22,7 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with S
       val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) = criteria
       for {
         key <- surrogateKeyOf(persistenceId)
-        sql = sql"SELECT * FROM $snapshotTable WHERE persistence_key = $key AND sequence_nr <= $maxSequenceNr AND sequence_nr >= $minSequenceNr AND created_at <= $maxTimestamp AND created_at >= $minTimestamp ORDER BY sequence_nr DESC LIMIT 1"
+        sql = sql"SELECT * FROM $snapshotTable WHERE persistence_key = $key AND sequence_nr >= $minSequenceNr AND sequence_nr <= $maxSequenceNr AND created_at >= $minTimestamp AND created_at <= $maxTimestamp ORDER BY sequence_nr DESC LIMIT 1"
         snapshot <- logging(sql).map { result =>
           val Snapshot(snapshot) = serialization.deserialize(result.bytes("snapshot"), classOf[Snapshot]).get
           SelectedSnapshot(
