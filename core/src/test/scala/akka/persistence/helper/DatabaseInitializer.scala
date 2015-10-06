@@ -99,7 +99,7 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
        |  sequence_nr BIGINT NOT NULL,
        |  PRIMARY KEY (persistence_key),
        |  UNIQUE (persistence_id)
-       |)
+       |);
      """.stripMargin
   }
 
@@ -110,7 +110,7 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
         |  sequence_nr BIGINT NOT NULL,
         |  message BYTEA NOT NULL,
         |  PRIMARY KEY (persistence_key, sequence_nr)
-        |)
+        |);
       """.stripMargin
   }
 
@@ -122,7 +122,7 @@ trait PostgreSQLInitializer extends DatabaseInitializer {
         |  created_at BIGINT NOT NULL,
         |  snapshot BYTEA NOT NULL,
         |  PRIMARY KEY (persistence_key, sequence_nr)
-        |)
+        |);
      """.stripMargin
   }
 }
