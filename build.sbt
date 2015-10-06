@@ -28,7 +28,7 @@ lazy val performanceTest = (project in file("performance-test"))
 
 lazy val commonSettings = Seq(
   organization := "com.okumin",
-  version := "0.3",
+  version := "0.3.0",
   scalaVersion := "2.11.7",
   parallelExecution in Test := false,
   libraryDependencies := commonDependencies
