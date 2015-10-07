@@ -128,6 +128,9 @@ CREATE TABLE IF NOT EXISTS {your_snapshot_table_name} (
 
 ## Release Notes
 
+### 0.3.0 - Oct 7, 2015
+- Update Akka to 2.4
+
 ### 0.2.1 - Sep 25, 2015
 - [Keep the highest sequence number](https://github.com/okumin/akka-persistence-sql-async/issues/6)
 
