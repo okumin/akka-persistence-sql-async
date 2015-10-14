@@ -3,11 +3,12 @@ package akka.persistence.journal.sqlasync
 import akka.persistence.common.StoragePlugin
 import akka.persistence.journal.AsyncWriteJournal
 import akka.persistence.{AtomicWrite, PersistentRepr}
+import scalikejdbc._
+import scalikejdbc.async._
+
 import scala.collection.immutable
 import scala.concurrent.Future
 import scala.util.{Success, Try}
-import scalikejdbc._
-import scalikejdbc.async._
 
 private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with StoragePlugin {
   private[this] lazy val journalTable = {
@@ -35,20 +36,24 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with S
     }
 
     log.debug("Write messages, {}", messages)
-    sessionProvider.localTx { implicit session =>
-      val persistenceIds = messages.map(_.persistenceId).toSet
+    if (messages.isEmpty) {
+      Future.successful(Nil)
+    } else {
+      sessionProvider.localTx { implicit session =>
+        val persistenceIds = messages.map(_.persistenceId).toSet
 
-      for {
-        keys <- persistenceIds.foldLeft(Future.successful(Map.empty[String, Long])) { (acc, id) =>
-          for {
-            map <- acc
-            persistenceKey <- surrogateKeyOf(id)
-          } yield map.updated(id, persistenceKey)
-        }
-        (batch, result) = serialize(keys)
-        sql = sql"INSERT INTO $journalTable (persistence_key, sequence_nr, message) VALUES $batch"
-        _ <- logging(sql).update().future()
-      } yield result
+        for {
+          keys <- persistenceIds.foldLeft(Future.successful(Map.empty[String, Long])) { (acc, id) =>
+            for {
+              map <- acc
+              persistenceKey <- surrogateKeyOf(id)
+            } yield map.updated(id, persistenceKey)
+          }
+          (batch, result) = serialize(keys)
+          sql = sql"INSERT INTO $journalTable (persistence_key, sequence_nr, message) VALUES $batch"
+          _ <- logging(sql).update().future()
+        } yield result
+      }
     }
   }
 
