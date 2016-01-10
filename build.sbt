@@ -26,6 +26,17 @@ lazy val performanceTest = (project in file("performance-test"))
     core % "test->test"
   )
 
+lazy val sample = (project in file("sample"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "akka-persistence-sql-async-sample",
+    libraryDependencies ++= Seq(
+      "com.typesafe.play" % "play-json_2.11" % "2.4.6",
+      "commons-codec" % "commons-codec" % "1.9"
+    )
+  )
+  .dependsOn(core)
+
 lazy val commonSettings = Seq(
   organization := "com.okumin",
   version := "0.3.1",
