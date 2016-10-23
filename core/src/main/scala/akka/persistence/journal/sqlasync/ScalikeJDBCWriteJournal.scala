@@ -3,12 +3,11 @@ package akka.persistence.journal.sqlasync
 import akka.persistence.common.StoragePlugin
 import akka.persistence.journal.AsyncWriteJournal
 import akka.persistence.{AtomicWrite, PersistentRepr}
-import scalikejdbc._
-import scalikejdbc.async._
-
 import scala.collection.immutable
 import scala.concurrent.Future
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
+import scalikejdbc._
+import scalikejdbc.async._
 
 private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with StoragePlugin {
   private[this] lazy val journalTable = {
@@ -51,8 +50,19 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with S
           }
           (batch, result) = serialize(keys)
           sql = sql"INSERT INTO $journalTable (persistence_key, sequence_nr, message) VALUES $batch"
-          _ <- logging(sql).update().future()
-        } yield result
+          _ <- if (result.forall(_.isFailure)) {
+            // No insertion is needed.
+            Future.successful(())
+          } else {
+            logging(sql).update().future()
+          }
+        } yield {
+          result.foreach {
+            case Success(_) =>
+            case Failure(e) => log.warning("Failed serializing an event.", e)
+          }
+          result
+        }
       }
     }
   }
