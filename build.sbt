@@ -56,7 +56,7 @@ lazy val commonDependencies = Seq(
   "com.typesafe.akka"   %% "akka-persistence-tck" % akkaVersion     % "test",
   "com.typesafe.akka"   %% "akka-slf4j"           % akkaVersion     % "test",
   "com.typesafe.akka"   %% "akka-testkit"         % akkaVersion     % "test",
-  "org.slf4j"            % "slf4j-log4j12"        % "1.7.12"        % "test"
+  "org.slf4j"            % "slf4j-log4j12"        % "1.7.21"        % "test"
 )
 
 lazy val persistenceQueryDependencies = Seq(
