@@ -49,11 +49,11 @@ private[sqlasync] trait ScalikeJDBCWriteJournal extends AsyncWriteJournal with S
             } yield map.updated(id, persistenceKey)
           }
           (batch, result) = serialize(keys)
-          sql = sql"INSERT INTO $journalTable (persistence_key, sequence_nr, message) VALUES $batch"
           _ <- if (result.forall(_.isFailure)) {
             // No insertion is needed.
             Future.successful(())
           } else {
+            val sql = sql"INSERT INTO $journalTable (persistence_key, sequence_nr, message) VALUES $batch"
             logging(sql).update().future()
           }
         } yield {
