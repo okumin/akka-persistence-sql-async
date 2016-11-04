@@ -31,8 +31,7 @@ lazy val sample = (project in file("sample"))
   .settings(
     name := "akka-persistence-sql-async-sample",
     libraryDependencies ++= Seq(
-      "com.typesafe.play" % "play-json_2.11" % "2.4.6",
-      "commons-codec" % "commons-codec" % "1.9"
+      "com.typesafe.play" % "play-json_2.11" % "2.5.9"
     )
   )
   .dependsOn(core)
