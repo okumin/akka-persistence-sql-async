@@ -31,26 +31,29 @@ lazy val sample = (project in file("sample"))
   .settings(
     name := "akka-persistence-sql-async-sample",
     libraryDependencies ++= Seq(
-      "com.typesafe.play" % "play-json_2.11" % "2.5.9"
+      "com.typesafe.play" %% "play-json" % "2.6.0-M1"
     )
   )
   .dependsOn(core)
 
+lazy val Scala211 = "2.11.8"
+
 lazy val commonSettings = Seq(
   organization := "com.okumin",
   version := "0.4.0",
-  scalaVersion := "2.11.8",
+  scalaVersion := Scala211,
+  crossScalaVersions := Seq(Scala211, "2.12.1"),
   parallelExecution in Test := false,
   libraryDependencies := commonDependencies
 )
 
-val akkaVersion = "2.4.12"
-val mauricioVersion = "0.2.20"
+val akkaVersion = "2.4.16"
+val mauricioVersion = "0.2.21"
 
 lazy val commonDependencies = Seq(
   "com.typesafe.akka"   %% "akka-actor"           % akkaVersion,
   "com.typesafe.akka"   %% "akka-persistence"     % akkaVersion,
-  "org.scalikejdbc"     %% "scalikejdbc-async"    % "0.6.0",
+  "org.scalikejdbc"     %% "scalikejdbc-async"    % "0.7.1",
   "com.github.mauricio" %% "mysql-async"          % mauricioVersion % "provided",
   "com.github.mauricio" %% "postgresql-async"     % mauricioVersion % "provided",
   "com.typesafe.akka"   %% "akka-persistence-tck" % akkaVersion     % "test",
