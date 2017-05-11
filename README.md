@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS {your_metadata_table_name} (
 CREATE TABLE IF NOT EXISTS {your_journal_table_name} (
   persistence_key BIGINT NOT NULL,
   sequence_nr BIGINT NOT NULL,
-  message BLOB NOT NULL,
+  message LONGBLOB NOT NULL,
   PRIMARY KEY (persistence_key, sequence_nr),
   FOREIGN KEY (persistence_key) REFERENCES {your_metadata_table_name} (persistence_key)
 ) ENGINE = InnoDB;
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS {your_snapshot_table_name} (
   persistence_key BIGINT NOT NULL,
   sequence_nr BIGINT NOT NULL,
   created_at BIGINT NOT NULL,
-  snapshot BLOB NOT NULL,
+  snapshot LONGBLOB NOT NULL,
   PRIMARY KEY (persistence_key, sequence_nr),
   FOREIGN KEY (persistence_key) REFERENCES {your_metadata_table_name} (persistence_key)
 ) ENGINE = InnoDB;
