@@ -67,7 +67,7 @@ lazy val commonDependencies = Seq(
 )
 
 lazy val persistenceQueryDependencies = Seq(
-  "com.typesafe.akka" %% "akka-persistence-query-experimental" % akkaVersion
+  "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion
 )
 
 lazy val publishSettings = Seq(
