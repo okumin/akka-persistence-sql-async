@@ -50,7 +50,7 @@ class MySQLAsyncJournalSpec
           payload should be(notSerializableEvent)
           cause.isInstanceOf[NotSerializableException] should be(true)
       }
-      probe.expectNoMsg(1.second)
+      probe.expectNoMessage(1.second)
     }
   }
 }

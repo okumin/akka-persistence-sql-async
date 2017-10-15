@@ -44,10 +44,13 @@ lazy val commonSettings = Seq(
   scalaVersion := Scala211,
   crossScalaVersions := Seq(Scala211, "2.12.1"),
   parallelExecution in Test := false,
-  libraryDependencies := commonDependencies
+  libraryDependencies := commonDependencies,
+  scalacOptions ++= Seq(
+    "-deprecation"
+  )
 )
 
-val akkaVersion = "2.4.16"
+val akkaVersion = "2.5.6"
 val mauricioVersion = "0.2.21"
 
 lazy val commonDependencies = Seq(
