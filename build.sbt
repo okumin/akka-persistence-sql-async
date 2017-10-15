@@ -36,13 +36,14 @@ lazy val sample = (project in file("sample"))
   )
   .dependsOn(core)
 
-lazy val Scala211 = "2.11.8"
+lazy val Scala211 = "2.11.11"
+lazy val Scala212 = "2.12.3"
 
 lazy val commonSettings = Seq(
   organization := "com.okumin",
   version := "0.4.1",
-  scalaVersion := Scala211,
-  crossScalaVersions := Seq(Scala211, "2.12.1"),
+  scalaVersion := Scala212,
+  crossScalaVersions := Seq(Scala211, Scala212),
   parallelExecution in Test := false,
   libraryDependencies := commonDependencies,
   scalacOptions ++= Seq(
