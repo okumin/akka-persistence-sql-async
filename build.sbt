@@ -31,23 +31,27 @@ lazy val sample = (project in file("sample"))
   .settings(
     name := "akka-persistence-sql-async-sample",
     libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play-json" % "2.6.0-M1"
+      "com.typesafe.play" %% "play-json" % "2.6.6"
     )
   )
   .dependsOn(core)
 
-lazy val Scala211 = "2.11.8"
+lazy val Scala211 = "2.11.11"
+lazy val Scala212 = "2.12.3"
 
 lazy val commonSettings = Seq(
   organization := "com.okumin",
   version := "0.4.1",
-  scalaVersion := Scala211,
-  crossScalaVersions := Seq(Scala211, "2.12.1"),
+  scalaVersion := Scala212,
+  crossScalaVersions := Seq(Scala211, Scala212),
   parallelExecution in Test := false,
-  libraryDependencies := commonDependencies
+  libraryDependencies := commonDependencies,
+  scalacOptions ++= Seq(
+    "-deprecation"
+  )
 )
 
-val akkaVersion = "2.4.16"
+val akkaVersion = "2.5.6"
 val mauricioVersion = "0.2.21"
 
 lazy val commonDependencies = Seq(
@@ -59,7 +63,7 @@ lazy val commonDependencies = Seq(
   "com.typesafe.akka"   %% "akka-persistence-tck" % akkaVersion     % "test",
   "com.typesafe.akka"   %% "akka-slf4j"           % akkaVersion     % "test",
   "com.typesafe.akka"   %% "akka-testkit"         % akkaVersion     % "test",
-  "org.slf4j"            % "slf4j-log4j12"        % "1.7.21"        % "test"
+  "org.slf4j"            % "slf4j-log4j12"        % "1.7.25"        % "test"
 )
 
 lazy val persistenceQueryDependencies = Seq(
