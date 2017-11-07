@@ -37,7 +37,7 @@ lazy val sample = (project in file("sample"))
   .dependsOn(core)
 
 lazy val Scala211 = "2.11.11"
-lazy val Scala212 = "2.12.3"
+lazy val Scala212 = "2.12.4"
 
 lazy val commonSettings = Seq(
   organization := "com.okumin",
