@@ -41,7 +41,7 @@ lazy val Scala212 = "2.12.4"
 
 lazy val commonSettings = Seq(
   organization := "com.okumin",
-  version := "0.4.1",
+  version := "0.5.0",
   scalaVersion := Scala212,
   crossScalaVersions := Seq(Scala211, Scala212),
   parallelExecution in Test := false,
