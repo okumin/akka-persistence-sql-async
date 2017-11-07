@@ -1,5 +1,7 @@
 
-lazy val root = (project in file(".")).aggregate(core)
+lazy val root = (project in file("."))
+  .aggregate(core)
+  .settings(skip in publish := true)
 
 lazy val core = (project in file("core"))
   .settings(commonSettings: _*)
@@ -10,6 +12,7 @@ lazy val core = (project in file("core"))
 
 lazy val persistenceQuery = (project in file("persistence-query"))
   .settings(commonSettings: _*)
+  .settings(skip in publish := true)
   .settings(
     name := "akka-persistence-query-sql-async",
     libraryDependencies ++= persistenceQueryDependencies
@@ -18,6 +21,7 @@ lazy val persistenceQuery = (project in file("persistence-query"))
 
 lazy val performanceTest = (project in file("performance-test"))
   .settings(commonSettings: _*)
+  .settings(skip in publish := true)
   .settings(
     name := "akka-persistence-sql-async-performance-test"
   )
@@ -28,6 +32,7 @@ lazy val performanceTest = (project in file("performance-test"))
 
 lazy val sample = (project in file("sample"))
   .settings(commonSettings: _*)
+  .settings(skip in publish := true)
   .settings(
     name := "akka-persistence-sql-async-sample",
     libraryDependencies ++= Seq(
