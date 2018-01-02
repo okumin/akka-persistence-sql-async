@@ -63,6 +63,9 @@ akka-persistence-sql-async {
   metadata-table-name = "persistence_metadata"
   journal-table-name = "persistence_journal"
   snapshot-table-name = "persistence_snapshot"
+  
+  connect-timeout = 5s
+  query-timeout = 5s
 }
 ```
 
