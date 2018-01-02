@@ -19,7 +19,7 @@ This library is tested against [akka-persistence-tck](http://doc.akka.io/docs/ak
 You should add the following dependency.
 
 ```
-libraryDependencies += "com.okumin" %% "akka-persistence-sql-async" % "0.5.0"
+libraryDependencies += "com.okumin" %% "akka-persistence-sql-async" % "0.5.1"
 ```
 
 And then, please include the mysql-async if you use MySQL.
@@ -130,6 +130,9 @@ CREATE TABLE IF NOT EXISTS {your_snapshot_table_name} (
 ```
 
 ## Release Notes
+
+### 0.5.1 - Jan 2, 2018
+- Support connect/query timeout
 
 ### 0.5.0 - Nov 8, 2017
 - Update dependencies
