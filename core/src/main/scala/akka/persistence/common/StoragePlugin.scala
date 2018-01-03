@@ -21,17 +21,20 @@ private[persistence] trait StoragePlugin extends Actor with ActorLogging {
 
   // PersistenceId => its surrogate key
   private[this] val persistenceIds: TrieMap[String, Long] = TrieMap.empty
-  protected[this] def surrogateKeyOf(persistenceId: String)(implicit session: TxAsyncDBSession): Future[Long] = {
+  protected[this] def surrogateKeyOf(persistenceId: String)(
+      implicit session: TxAsyncDBSession): Future[Long] = {
     persistenceIds.get(persistenceId) match {
       case Some(id) => Future.successful(id)
       case None =>
-        val select = sql"SELECT persistence_key FROM $metadataTable WHERE persistence_id = $persistenceId"
+        val select =
+          sql"SELECT persistence_key FROM $metadataTable WHERE persistence_id = $persistenceId"
         select.map(_.long("persistence_key")).single().future().flatMap {
           case Some(id) =>
             persistenceIds.update(persistenceId, id)
             Future.successful(id)
           case None =>
-            val insert = sql"INSERT INTO $metadataTable (persistence_id, sequence_nr) VALUES ($persistenceId, 0)"
+            val insert =
+              sql"INSERT INTO $metadataTable (persistence_id, sequence_nr) VALUES ($persistenceId, 0)"
             for {
               _ <- insert.update().future()
               id <- lastInsertId()
@@ -54,13 +57,21 @@ private[persistence] trait StoragePlugin extends Actor with ActorLogging {
 private[persistence] trait MySQLPlugin extends StoragePlugin {
   override protected[this] def lastInsertId()(implicit session: TxAsyncDBSession): Future[Long] = {
     val sql = sql"SELECT LAST_INSERT_ID() AS id;"
-    sql.map(_.long("id")).single().future().map(_.getOrElse(sys.error("Failed to fetch a last insert id.")))
+    sql
+      .map(_.long("id"))
+      .single()
+      .future()
+      .map(_.getOrElse(sys.error("Failed to fetch a last insert id.")))
   }
 }
 
 private[persistence] trait PostgreSQLPlugin extends StoragePlugin {
   override protected[this] def lastInsertId()(implicit session: TxAsyncDBSession): Future[Long] = {
     val sql = sql"SELECT LASTVAL() AS id;"
-    sql.map(_.long("id")).single().future().map(_.getOrElse(sys.error("Failed to fetch a last insert id.")))
+    sql
+      .map(_.long("id"))
+      .single()
+      .future()
+      .map(_.getOrElse(sys.error("Failed to fetch a last insert id.")))
   }
 }

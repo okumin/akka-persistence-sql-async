@@ -3,7 +3,9 @@ package akka.persistence.common
 import akka.actor.{ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider}
 import scalikejdbc.async.{AsyncConnectionPool, AsyncConnectionPoolSettings, AsyncConnectionSettings}
 
-private[persistence] object ScalikeJDBCExtension extends ExtensionId[ScalikeJDBCExtension] with ExtensionIdProvider {
+private[persistence] object ScalikeJDBCExtension
+    extends ExtensionId[ScalikeJDBCExtension]
+    with ExtensionIdProvider {
   override def createExtension(system: ExtendedActorSystem): ScalikeJDBCExtension = {
     new ScalikeJDBCExtension(system)
   }

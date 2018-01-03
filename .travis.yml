@@ -14,3 +14,6 @@ before_script:
   - psql -c "CREATE DATABASE akka_persistence_sql_async;" -U postgres
   - mysql -e "CREATE DATABASE akka_persistence_sql_async;" -uroot
   - sudo chmod +x /usr/local/bin/sbt
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION scalafmtCheck test:scalafmtCheck test

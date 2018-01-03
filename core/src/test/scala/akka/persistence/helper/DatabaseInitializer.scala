@@ -35,8 +35,8 @@ trait DatabaseInitializer extends PluginSpec {
   }
 
   /**
-   * Flush DB.
-   */
+    * Flush DB.
+    */
   protected override def beforeAll(): Unit = {
     val ddl = Seq(
       dropJournalTableDDL,

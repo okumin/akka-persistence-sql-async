@@ -24,10 +24,12 @@ private[persistence] class SQLAsyncConfig(val system: ActorSystem) {
   val queryTimeout: Option[Duration] = getOptionalDuration("query-timeout", 5.seconds)
 
   private def getOptionalDuration(configKey: String, defaultValue: FiniteDuration) = {
-    if (config.hasPath(configKey))
-      Option(FiniteDuration(config.getDuration(configKey, TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS))
-    else
+    if (config.hasPath(configKey)) {
+      val duration = config.getDuration(configKey, TimeUnit.NANOSECONDS)
+      Option(FiniteDuration(duration, TimeUnit.NANOSECONDS))
+    } else {
       Option(defaultValue)
+    }
   }
 }
 

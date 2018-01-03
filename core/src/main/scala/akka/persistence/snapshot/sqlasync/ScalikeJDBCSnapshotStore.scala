@@ -16,25 +16,36 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with S
     SQLSyntax.createUnsafely(tableName)
   }
 
-  override def loadAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Option[SelectedSnapshot]] = {
+  override def loadAsync(persistenceId: String,
+                         criteria: SnapshotSelectionCriteria): Future[Option[SelectedSnapshot]] = {
     log.debug("Load a snapshot, persistenceId = {}, criteria = {}", persistenceId, criteria)
     sessionProvider.localTx { implicit session =>
-      val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) = criteria
+      val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) =
+        criteria
       for {
         key <- surrogateKeyOf(persistenceId)
         sql = sql"SELECT * FROM $snapshotTable WHERE persistence_key = $key AND sequence_nr >= $minSequenceNr AND sequence_nr <= $maxSequenceNr AND created_at >= $minTimestamp AND created_at <= $maxTimestamp ORDER BY sequence_nr DESC LIMIT 1"
-        snapshot <- logging(sql).map { result =>
-          val Snapshot(snapshot) = serialization.deserialize(result.bytes("snapshot"), classOf[Snapshot]).get
-          SelectedSnapshot(
-            SnapshotMetadata(persistenceId, result.long("sequence_nr"), result.long("created_at")),
-            snapshot
-          )
-        }.single().future()
+        snapshot <- logging(sql)
+          .map { result =>
+            val Snapshot(snapshot) =
+              serialization.deserialize(result.bytes("snapshot"), classOf[Snapshot]).get
+            SelectedSnapshot(
+              SnapshotMetadata(persistenceId,
+                               result.long("sequence_nr"),
+                               result.long("created_at")),
+              snapshot
+            )
+          }
+          .single()
+          .future()
       } yield snapshot
     }
   }
 
-  protected[this] def upsert(persistenceId: String, sequenceNr: Long, timestamp: Long, snapshot: Array[Byte]): Future[Unit]
+  protected[this] def upsert(persistenceId: String,
+                             sequenceNr: Long,
+                             timestamp: Long,
+                             snapshot: Array[Byte]): Future[Unit]
 
   override def saveAsync(metadata: SnapshotMetadata, snapshot: Any): Future[Unit] = {
     log.debug("Save the snapshot, metadata = {}, snapshot = {}", metadata, snapshot)
@@ -56,9 +67,11 @@ private[persistence] trait ScalikeJDBCSnapshotStore extends SnapshotStore with S
     }
   }
 
-  override def deleteAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Unit] = {
+  override def deleteAsync(persistenceId: String,
+                           criteria: SnapshotSelectionCriteria): Future[Unit] = {
     log.debug("Delete the snapshot for {}, criteria = {}", persistenceId, criteria)
-    val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) = criteria
+    val SnapshotSelectionCriteria(maxSequenceNr, maxTimestamp, minSequenceNr, minTimestamp) =
+      criteria
     sessionProvider.localTx { implicit session =>
       for {
         key <- surrogateKeyOf(persistenceId)
