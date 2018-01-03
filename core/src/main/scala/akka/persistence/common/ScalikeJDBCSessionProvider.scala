@@ -4,19 +4,22 @@ import scala.concurrent.{ExecutionContext, Future}
 import scalikejdbc.async._
 
 private[persistence] trait ScalikeJDBCSessionProvider {
+
   /**
-   * Provides a shared session.
-   */
+    * Provides a shared session.
+    */
   def withPool[A](f: SharedAsyncDBSession => Future[A]): Future[A]
 
   /**
-   * Provides a session for transaction.
-   */
+    * Provides a session for transaction.
+    */
   def localTx[A](f: TxAsyncDBSession => Future[A]): Future[A]
 }
 
-private[persistence] class DefaultScalikeJDBCSessionProvider(poolName: String, implicit private val executor: ExecutionContext)
-  extends ScalikeJDBCSessionProvider {
+private[persistence] class DefaultScalikeJDBCSessionProvider(
+    poolName: String,
+    implicit private val executor: ExecutionContext)
+    extends ScalikeJDBCSessionProvider {
 
   override def withPool[A](f: (SharedAsyncDBSession) => Future[A]): Future[A] = {
     f(SharedAsyncDBSession(AsyncConnectionPool.borrow(poolName)))
@@ -26,7 +29,11 @@ private[persistence] class DefaultScalikeJDBCSessionProvider(poolName: String, i
     AsyncConnectionPool
       .borrow(poolName)
       .toNonSharedConnection()
-      .map { nonSharedConnection => TxAsyncDBSession(nonSharedConnection) }
-      .flatMap { tx => AsyncTx.inTransaction[A](tx, f) }
+      .map { nonSharedConnection =>
+        TxAsyncDBSession(nonSharedConnection)
+      }
+      .flatMap { tx =>
+        AsyncTx.inTransaction[A](tx, f)
+      }
   }
 }

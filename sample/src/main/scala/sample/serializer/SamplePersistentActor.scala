@@ -15,7 +15,7 @@ object PutEvent {
   implicit val format: Format[PutEvent] = {
     (
       (__ \ "key").format[String] and
-      (__ \ "value").format[String]
+        (__ \ "value").format[String]
     )(PutEvent.apply, unlift(PutEvent.unapply))
   }
 }
@@ -36,19 +36,19 @@ object State {
 }
 
 /**
- * This is a sample that uses a custom serializer.
- * This sample is too simple, so read the document if you implement a custom serializer.
- * @see [[http://doc.akka.io/docs/akka/2.4.1/scala/persistence-schema-evolution.html]]
- */
+  * This is a sample that uses a custom serializer.
+  * This sample is too simple, so read the document if you implement a custom serializer.
+  * @see [[http://doc.akka.io/docs/akka/2.4.1/scala/persistence-schema-evolution.html]]
+  */
 class SamplePersistentActor extends PersistentActor with ActorLogging {
   override def persistenceId: String = "serializer-sample"
 
   var kvs: Map[String, String] = Map.empty
 
   override def receiveRecover: Receive = {
-    case PutEvent(key, value) => kvs += key -> value
+    case PutEvent(key, value)              => kvs += key -> value
     case SnapshotOffer(_, snapshot: State) => kvs = snapshot.kvs
-    case x => log.warning(x.toString)
+    case x                                 => log.warning(x.toString)
   }
 
   override def receiveCommand: Receive = {
@@ -61,8 +61,8 @@ class SamplePersistentActor extends PersistentActor with ActorLogging {
         case PutEvent(k, v) => kvs += k -> v
       }
     case SaveSnapshot => saveSnapshot(State(kvs))
-    case Print => println(kvs)
-    case x => log.info(x.toString)
+    case Print        => println(kvs)
+    case x            => log.info(x.toString)
   }
 }
 
@@ -70,19 +70,19 @@ class SamplePersistentReprSerializer(system: ExtendedActorSystem) extends Serial
   implicit private[this] val format: Format[PersistentRepr] = {
     (
       (__ \ "payload").format[PutEvent] and
-      (__ \ "sequence_nr").format[Long] and
-      (__ \ "persistence_id").format[String] and
-      (__ \ "manifest").format[String] and
-      (__ \ "deleted").format[Boolean] and
-      (__ \ "writer_uuid").format[String]
-    )(PersistentRepr(_, _, _, _, _, null, _), x => (
-      x.payload.asInstanceOf[PutEvent],
-      x.sequenceNr,
-      x.persistenceId,
-      x.manifest,
-      x.deleted,
-      x.writerUuid)
-    )
+        (__ \ "sequence_nr").format[Long] and
+        (__ \ "persistence_id").format[String] and
+        (__ \ "manifest").format[String] and
+        (__ \ "deleted").format[Boolean] and
+        (__ \ "writer_uuid").format[String]
+    )(PersistentRepr(_, _, _, _, _, null, _),
+      x =>
+        (x.payload.asInstanceOf[PutEvent],
+         x.sequenceNr,
+         x.persistenceId,
+         x.manifest,
+         x.deleted,
+         x.writerUuid))
   }
 
   private[this] val serializer: Serializer = new MessageSerializer(system)
@@ -123,7 +123,7 @@ class SampleSnapshotSerializer(system: ExtendedActorSystem) extends Serializer {
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case Snapshot(s: State) => Json.toJson(s).toString().getBytes(StandardCharsets.UTF_8)
-    case x => serializer.toBinary(x)
+    case x                  => serializer.toBinary(x)
   }
 }
 

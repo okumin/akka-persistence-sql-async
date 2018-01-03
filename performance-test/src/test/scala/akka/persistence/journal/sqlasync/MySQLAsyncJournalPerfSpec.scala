@@ -7,8 +7,8 @@ import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
 class MySQLAsyncJournalPerfSpec
-  extends JournalPerfSpec(ConfigFactory.load("mysql-application.conf"))
-  with MySQLInitializer {
+    extends JournalPerfSpec(ConfigFactory.load("mysql-application.conf"))
+    with MySQLInitializer {
   override def awaitDurationMillis: Long = 100.seconds.toMillis
   override protected def supportsRejectingNonSerializableObjects: CapabilityFlag = true
 }

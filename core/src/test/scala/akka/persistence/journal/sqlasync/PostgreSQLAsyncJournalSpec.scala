@@ -6,7 +6,7 @@ import akka.persistence.journal.JournalSpec
 import com.typesafe.config.ConfigFactory
 
 class PostgreSQLAsyncJournalSpec
-  extends JournalSpec(ConfigFactory.load("postgresql-application.conf"))
-  with PostgreSQLInitializer {
+    extends JournalSpec(ConfigFactory.load("postgresql-application.conf"))
+    with PostgreSQLInitializer {
   override protected def supportsRejectingNonSerializableObjects: CapabilityFlag = true
 }
