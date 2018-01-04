@@ -1,6 +1,6 @@
 
 lazy val root = (project in file("."))
-  .aggregate(core)
+  .aggregate(core, persistenceQuery, sample)
   .settings(skip in publish := true)
 
 lazy val core = (project in file("core"))
@@ -9,6 +9,7 @@ lazy val core = (project in file("core"))
   .settings(
     name := "akka-persistence-sql-async"
   )
+  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val persistenceQuery = (project in file("persistence-query"))
   .settings(commonSettings: _*)
@@ -18,6 +19,7 @@ lazy val persistenceQuery = (project in file("persistence-query"))
     libraryDependencies ++= persistenceQueryDependencies
   )
   .dependsOn(core)
+  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val performanceTest = (project in file("performance-test"))
   .settings(commonSettings: _*)
@@ -29,6 +31,7 @@ lazy val performanceTest = (project in file("performance-test"))
     core,
     core % "test->test"
   )
+  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val sample = (project in file("sample"))
   .settings(commonSettings: _*)
@@ -40,6 +43,7 @@ lazy val sample = (project in file("sample"))
     )
   )
   .dependsOn(core)
+  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val Scala211 = "2.11.11"
 lazy val Scala212 = "2.12.4"
@@ -53,7 +57,11 @@ lazy val commonSettings = Seq(
   libraryDependencies := commonDependencies,
   scalacOptions ++= Seq(
     "-deprecation"
-  )
+  ),
+  // sbt-header settings
+  organizationName := "okumin.com",
+  startYear := Some(2014),
+  licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 )
 
 val akkaVersion = "2.5.6"
