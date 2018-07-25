@@ -7,7 +7,7 @@ jdk:
   - oraclejdk8
 
 addons:
-  postgresql: "9.3"
+  postgresql: "9.6"
 
 before_script:
   - psql -c "CREATE ROLE root WITH SUPERUSER LOGIN PASSWORD '';" -U postgres
