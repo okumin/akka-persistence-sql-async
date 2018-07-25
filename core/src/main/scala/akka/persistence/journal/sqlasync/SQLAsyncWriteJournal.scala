@@ -34,7 +34,7 @@ class PostgreSQLAsyncWriteJournal extends ScalikeJDBCWriteJournal with PostgreSQ
   override protected[this] def updateSequenceNr(persistenceId: String, sequenceNr: Long)(
       implicit session: TxAsyncDBSession): Future[Unit] = {
     val sql =
-      sql"WITH upsert AS (UPDATE $metadataTable SET sequence_nr = $sequenceNr WHERE persistence_id = $persistenceId RETURNING *) INSERT INTO $metadataTable (persistence_id, sequence_nr) SELECT $persistenceId, $sequenceNr WHERE NOT EXISTS (SELECT * FROM upsert)"
+      sql"INSERT INTO $metadataTable (persistence_id, sequence_nr) VALUES ($persistenceId, $sequenceNr) ON CONFLICT (persistence_id) DO UPDATE SET sequence_nr = $sequenceNr"
     logging(sql).update().future().map(_ => ())
   }
 }
